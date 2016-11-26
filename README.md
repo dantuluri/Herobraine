@@ -1,5 +1,6 @@
 # Herobraine
-[!Herobraine](https://hydra-media.cursecdn.com/minecraft.gamepedia.com/thumb/b/b4/Herobrine.png/150px-Herobrine.png?version=70c3a6ffaf71ed5e40e000dece271c56)
+![Herobraine](https://hydra-media.cursecdn.com/minecraft.gamepedia.com/thumb/b/b4/Herobrine.png/150px-Herobrine.png?version=70c3a6ffaf71ed5e40e000dece271c56)
+
 This repository is the cooresponding codebase for an experiment which 
 tests the state of the art in deep reinforcement learning against an entirely
 open world in environment: Minecraft.
