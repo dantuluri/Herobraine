@@ -22,3 +22,6 @@ what the hell happens when you actually stress tess these agents. We'd be
 really happy to see the community contribute other agents to the narrative,
 but for now we're attempting to stress test the standard set of algorithms.
 
+### Setup.
+Install minecraft_py, minecraft-gym, and place a Malmo installation in the `src/`
+directory of the repository

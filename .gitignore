@@ -88,3 +88,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+Mamlo/
+src/Malmo/
+src/Malmo/*
+src/Malmo
+/src/Malmo
