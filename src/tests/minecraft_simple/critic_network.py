@@ -3,8 +3,9 @@ import tensorflow as tf
 import numpy as np
 import math
 
-from .common.utils import variable
-from .common.utils import variable_summaries
+from common.utils import variable
+from common.utils import variable_summaries
+from common.utils import make_lenet_embedding
 
 LAYER1_SIZE = 400
 LAYER2_SIZE = 300
@@ -14,22 +15,23 @@ L2 = 0.01
 
 class CriticNetwork:
 	"""docstring for CriticNetwork"""
-	def __init__(self,sess,state_dim,action_dim):
+	def __init__(self,sess,state_space,action_space):
 		self.time_step = 0
 		self.sess = sess
-		self.state_dim = state_dim
-		self.action_dim = action_dim
+		self.state_space = state_space
+		self.action_space = action_space
 		# create q network
 		self.state_input,\
 		self.action_input,\
 		self.q_value_output,\
-		self.net = self.create_q_network(state_dim,action_dim)
+		self.net,
+		self.convws = self.create_q_network(state_space,action_space)
 
 		# create target q network (the same structure with q network)
 		self.target_state_input,\
 		self.target_action_input,\
 		self.target_q_value_output,\
-		self.target_update = self.create_target_q_network(state_dim,action_dim,self.net)
+		self.target_update = self.create_target_q_network(state_space,action_space,self.net, self.convws)
 
 		self.create_training_method()
 
@@ -47,13 +49,20 @@ class CriticNetwork:
 		self.optimizer = tf.train.AdamOptimizer(LEARNING_RATE).minimize(self.cost)
 		self.action_gradients = tf.gradients(self.q_value_output,self.action_input)
 
-	def create_q_network(self,state_dim,action_dim):
+	def create_q_network(self,state_space,action_space):
+
 		# the layer size could be changed
 		layer1_size = LAYER1_SIZE
 		layer2_size = LAYER2_SIZE
+		# Cointinuous + discrete
+		action_dim = sum(action_space[0].shape)  + action_space[1].shape 
 
-		state_input = tf.placeholder("float",[None,state_dim])
+		state_input = tf.placeholder("float",[None] + state_space.shape)
 		action_input = tf.placeholder("float",[None,action_dim])
+		convws = None
+
+		if len(state_space.shape) > 1:
+			action_input, convws = make_lenet_embedding(state_input)
 
 		W1 = variable([state_dim,layer1_size],state_dim)
 		b1 = variable([layer1_size],state_dim)
@@ -67,7 +76,7 @@ class CriticNetwork:
 		layer2 = tf.nn.relu(tf.matmul(layer1,W2) + tf.matmul(action_input,W2_action) + b2)
 		q_value_output = tf.identity(tf.matmul(layer2,W3) + b3)
 		variable_summaries(q_value_output, "Critic_Q")
-		return state_input,action_input,q_value_output,[W1,b1,W2,W2_action,b2,W3,b3]
+		return state_input,action_input,q_value_output,[W1,b1,W2,W2_action,b2,W3,b3], convws
 
 	def create_target_q_network(self,state_dim,action_dim,net):
 		state_input = tf.placeholder("float",[None,state_dim])

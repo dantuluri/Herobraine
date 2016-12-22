@@ -26,7 +26,7 @@ GAMMA = 0.99
 
 class DDPG:
     """docstring for DDPG"""
-    def __init__(self, sess, state_space, action_space]):
+    def __init__(self, sess, state_space, action_space):
         self.name = 'DDPG' 
         # Randomly initialize actor network and critic network
         # with both their target networks

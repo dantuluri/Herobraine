@@ -7,6 +7,8 @@ import tensorflow as tf
 import gym_minecraft
 import numpy as np
 
+NUM_EPISODES=1000
+
 def main():
 	"""
 	Runs a simple gym miencraft test.
@@ -22,13 +24,13 @@ def main():
 
 	# Set up tensorflow session
 	sess = tf.InteractiveSession()
+	for ep in range(NUM_EPISODES):
+		next_state = env.reset()
 
-	env.reset()
-
-	done = False
-	while not done:
-		state, reward, done, info = env.step([cts_action_space.sample(), [0,0,0,0]])
-		print(reward)
+		done = False
+		while not done:
+			state = next_state
+			next_state, reward, done, info = env.step([cts_action_space.sample(), [0,0,0,0]])#TODO ACTION#)
 
 
 
