@@ -24,7 +24,7 @@ class CriticNetwork:
 		self.state_input,\
 		self.action_input,\
 		self.q_value_output,\
-		self.net,
+		self.net, \
 		self.convws = self.create_q_network(state_space,action_space)
 
 		# create target q network (the same structure with q network)
@@ -56,13 +56,15 @@ class CriticNetwork:
 		layer2_size = LAYER2_SIZE
 		# Cointinuous + discrete
 		action_dim = sum(action_space[0].shape)  + action_space[1].shape 
+		 #If the input is two dimensional, then this will get overwritten
+		state_dim = state_space.shape[0] 
 
-		state_input = tf.placeholder("float",[None] + state_space.shape)
+		embedding = state_input = tf.placeholder("float",[None] + list(state_space.shape))
 		action_input = tf.placeholder("float",[None,action_dim])
-		convws = None
+		convws = []
 
 		if len(state_space.shape) > 1:
-			action_input, convws = make_lenet_embedding(state_input)
+			embedding, convws, state_dim = make_lenet_embedding(state_input)
 
 		W1 = variable([state_dim,layer1_size],state_dim)
 		b1 = variable([layer1_size],state_dim)
@@ -72,21 +74,30 @@ class CriticNetwork:
 		W3 = tf.Variable(tf.random_uniform([layer2_size,1],-3e-3,3e-3))
 		b3 = tf.Variable(tf.random_uniform([1],-3e-3,3e-3))
 
-		layer1 = tf.nn.relu(tf.matmul(state_input,W1) + b1)
+		layer1 = tf.nn.relu(tf.matmul(embedding,W1) + b1)
 		layer2 = tf.nn.relu(tf.matmul(layer1,W2) + tf.matmul(action_input,W2_action) + b2)
 		q_value_output = tf.identity(tf.matmul(layer2,W3) + b3)
 		variable_summaries(q_value_output, "Critic_Q")
-		return state_input,action_input,q_value_output,[W1,b1,W2,W2_action,b2,W3,b3], convws
+		return state_input,action_input, \
+			   q_value_output,[W1,b1,W2,W2_action,b2,W3,b3], convws
 
-	def create_target_q_network(self,state_dim,action_dim,net):
-		state_input = tf.placeholder("float",[None,state_dim])
-		action_input = tf.placeholder("float",[None,action_dim])
+	def create_target_q_network(self,state_space,action_space,net, convws):
 
 		ema = tf.train.ExponentialMovingAverage(decay=1-TAU)
-		target_update = ema.apply(net)
+		target_update = ema.apply(net + convws)
 		target_net = [ema.average(x) for x in net]
+		conv_net = [ema.average(x) for x in convws]
 
-		layer1 = tf.nn.relu(tf.matmul(state_input,target_net[0]) + target_net[1])
+		embedding = state_input = tf.placeholder("float",[None] + list(state_space.shape))
+
+		action_dim = sum(action_space[0].shape)  + action_space[1].shape 
+		action_input = tf.placeholder("float",[None,action_dim])
+
+		if len(state_space.shape) > 1:
+			embedding, convws, _ = make_lenet_embedding(state_input, conv_net)
+
+
+		layer1 = tf.nn.relu(tf.matmul(embedding,target_net[0]) + target_net[1])
 		layer2 = tf.nn.relu(tf.matmul(layer1,target_net[2]) + tf.matmul(action_input,target_net[3]) + target_net[4])
 		q_value_output = tf.identity(tf.matmul(layer2,target_net[5]) + target_net[6])
 		variable_summaries(q_value_output, "Critic_T_Q")

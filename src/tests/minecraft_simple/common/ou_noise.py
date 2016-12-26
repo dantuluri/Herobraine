@@ -23,11 +23,10 @@ class OUNoise:
         self.state = np.ones(self.action_dimension) * self.mu
 
     def noise(self):
-        # x = self.state
-        # dx = self.theta * (self.mu - x) + self.sigma * nr.randn(len(x))
-        # self.state = x + dx
-        # return self.state
-        return 0.1 * (nr.rand(1) * 2 - 1)
+        x = self.state
+        dx = self.theta * (self.mu - x) + self.sigma * nr.randn(len(x))
+        self.state = x + dx
+        return self.state
 
 if __name__ == '__main__':
     ou = OUNoise(3)

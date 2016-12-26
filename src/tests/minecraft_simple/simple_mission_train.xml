@@ -5,8 +5,8 @@
   </About>
 
   <ModSettings>
-      <MsPerTick>33</MsPerTick>
-      <PrioritiseOffscreenRendering>false</PrioritiseOffscreenRendering>
+      <MsPerTick>10</MsPerTick>
+      <PrioritiseOffscreenRendering>true</PrioritiseOffscreenRendering>
   </ModSettings>
 
   <ServerSection>
@@ -58,8 +58,8 @@
     </AgentStart>
     <AgentHandlers>
       <VideoProducer want_depth="false">
-        <Width>320</Width>
-        <Height>240</Height>
+        <Width>160</Width>
+        <Height>120</Height>
       </VideoProducer>
       <ObservationFromFullStats />
       <ContinuousMovementCommands turnSpeedDegs="180">
