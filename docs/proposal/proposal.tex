@@ -1,0 +1,94 @@
+\documentclass[11pt]{article}
+%
+\usepackage{abstract,amsmath,amssymb,latexsym}
+\usepackage{enumitem,epsf}
+\usepackage[stable]{footmisc}
+\usepackage{fullpage,tikz,float}
+\usepackage{caption}
+\usepackage[numbers]{natbib}
+\usepackage[pdftex,colorlinks]{hyperref}
+\usepackage{array, booktabs}
+\usepackage{graphicx}
+\usepackage{colortbl}
+\usepackage[TS1,T1]{fontenc}
+
+
+\newcommand{\foo}{\makebox[0pt]{\textbullet}\hskip-0.5pt\vrule width 1pt\hspace{\labelsep}}
+
+
+% locally defined macros
+\usepackage{macros}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Use the following for revealing TODOs and appendices
+% Options are: \draftfalse or \drafttrue
+\newif\ifdraft
+\draftfalse
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{
+ \begin{minipage}[c]{1.05\textwidth}
+ 	\centerline{Massively Multiagent Hierarchical Inverse}
+ 	\centerline{Reinforcement Learning in Open-world Environments}
+ \end{minipage}
+}
+
+\author{
+	\vspace{1cm}
+	William H. Guss\thanks{Carnegie Mellon University, Machine Learning Department.}\\[-1cm]
+	wguss@cs.cmu.edu \and
+	Ruslan Salakhutdinov\footnotemark[1] \\
+	rsalakhu@cs.cmu.edu
+}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+	\todo{
+Will, can you put together a quick 1.5-2 page proposal on inverse RL, Frank from US Army is saying that there is a potential to fund this kind of research: working with simulation environments, working on agents that can plan, communicate, solve slam, build strategies, do reward shaping via inverse RL, etc. They basically want to emphasize: 1, Metrics and Experiments. 2. Describing state-of-the-art in this area, and why what we are proposing is elite and new. Looks like US Army likes very ambitious projects. I will this together into one coherent white paper and we can see whether they would be willing to fund us. If not, we can take the same proposal to someone else as well.
+}
+\end{abstract}
+
+\setcounter{page}{1}
+
+
+\section{Introduction}
+
+\todo{Introduction to inverse reinforcement learning; what has it done?}
+
+Over recent years inverse reinforcement learning (IRL) has revolutionized the state of the art in apprenticeship learning, cooperative and adversarial modeling, and the modeling of intent in human and animal behaviour. 
+
+Core to the success of IRL is not only its ability to recapitulate expert policies from a relatively low number of samples but also 
+
+\todo{Provide a slightly more formal perspectrive to motivate why these methods could be interesting?}
+
+
+\todo{Introduce the problem statement, what is the problem of massively multiagent hierarchical reinforcement learning in open-world environments and why would this be pertinent.}
+
+\todo{Introduce the implications of solving the MMHIRL problem in open-world environments, potentially reference the taxi problem.}
+
+
+\section{Our Approach}
+
+\todo{To solve the problem of MMHIRL we will introduce methods which take advantage of the local connectedness of parameterized policy and reward space.}
+
+\todo{}
+
+
+\subsection{Experiments}
+
+\subsection{Metrics}
+
+
+
+
+
+\bibliographystyle{plainnat}
+\bibliography{bib}
+
+\end{document}

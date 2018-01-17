@@ -1,0 +1,134 @@
+http://178.79.149.207/posts/inverse-reinforcement-learning.html
+
+[IP] https://people.eecs.berkeley.edu/~pabbeel/cs287-fa12/slides/inverseRL.pdf 
+	* IRL FOR DESTINATION PREDICTION; MAX ENT IRL(https://www.aaai.org/Papers/AAAI/2008/AAAI08-227.pdf) IRL
+
+	THREE BROAD CATEGORIES OF FORMALISM
+	1. Max Margin
+	2. Feature Expectation Matching
+	3. Interpret reward functon as a parameterization of a policy class. 
+
+	Basically:
+		* Find a reward function R^* which explains the expert behaviour.
+		* Find R^* such that E[expected R^* | \pi^*] >= E[expected R^*| \pi] \forall \pi
+		* In face a convex feasibility problem, but with many challenged.
+			* R = 0 is a solution, and there is reward ambiguity.
+			* Typically only observe traces rather than an expert policy; how would we comptue the LHS of the inequality.
+			* Assumes the expert is indeed optimal w.r.t. a reward function.
+				# How can we leverage this in our appropach; some optimal space of policies.
+			* Computationally: assumes we can enumerate all policies; lol!
+	Feature based reward function: 
+		* Let R(s) = w^T\phi(s) where $w \in R^n$ and $\phi$ is some representation, then 
+		E[Q|\pi] = E[sum w^T \phi(s) | \pi]
+		         = w^T E[\gamma%t \phi(s_t) | \pi]
+		         = w^T \mu(\pi)
+			where \mu^(\pi) is the expected cumulative discounted sum of feature values.
+
+		* This assumption lets us reanalyze the initial inequality, and we yield that
+			E[expected R^* | \pi^*] = w^T\mu(\pi^*) \geq w^T(\pi) \forall \pi
+
+			 and thus, we need find w which satisfies this inequality; a linear program if feature space is parameterized.
+		* The number of expert demonstrations required scales with the number of features in the reward function. (these are the normal bounds on linear parametric linear regression \sigma^2d/n)
+		* Easily could be phrased as a structured prediction max margin problem with slack variables (this would account for the suboptimaliyu of an expert.)
+
+		    min_{w, \xi} \|w\|^2 + C \xi
+		    st. w^\mu(\pi^*) \geq w^t \mu(\pi) + m(\pi^*, \pi) - \xi \forall \xi
+
+		* Multiple MDPs (or initial state) might be parameterized by several slack variables; that is,
+
+			min_{w, \xi} \|w\|^2  + C sum \xi^i
+			st. w^t \mu(\pi^i*) \geq w%T(\pi^i) + m(\pi^i*, \pi^i) - \xi^i \forall i, \pi^i
+
+			=>  Ratliff, Zinkevich and Bagnell, 2006
+				This max margin formulation resolves: access to \pi^*, ambiguity, expert suboptimality.
+				However, there are a very large amount of constraints, possible solutions are Ratliff +al using subgradient methods.
+
+	Constraint generation. (ALG)
+		Initialize \Pi^i = {} for all i then iterate.
+		* Solve the problem on Pi^i for all i
+		* For the current value of w, find the most violated constaint for all i by solving: max w^t (\mu(\pi^i)) + m(\pi^i^*, \pi^i) = the most optimal policy for the current estimate of the reward function.
+
+		Essentially, we find a smart way of searching through policty space:
+			Assume that we've found the reward function, then if there is a policy for which the \xi-optimaliy of the agent is violated then we'll add that policy as a constraint in the SMMP. Then we resolve for the reward function and again search for such a policy. 
+
+			WE then could solve for \pi for doing gradient descent on a stable feature representation on $\mu$; the only concern is that $\mu$ must actually take in a policy and not just a sequence ofa ction pairs.
+				I wonder if we parameterize policy space, the learning directly of $\mu$ in some sort of outerloop would be possible.
+
+
+	Feature Matching
+		* For a policy \pi to be guarenteed to perform as well as the expert policy \pi^*, it sufficees that feature expectations match:
+			\|\mu(\pi) - \mu(\pi^*)\| \leq \epsilon 
+		implies that for all w with \|w\|_\infty \leq 1
+			|w^*^T \mu(\pi) - w^*^T\mu(\pi^*)| \leq \epsilon
+
+		* Theorem. To ensure that w.p. 1- \delta, the alg returns a policy \pi such that
+			E[R_w(s_t) | \pi] \geq E[R_w(s_t) | \pi^*] - \epsilon
+		it suffices that we run 4n/\epislon^2 iterations,
+		we have m \geq 2n/\epsilon^2 \log 2n/\delta demonstrations.
+		Where n is the dimensionality of the input space.
+			* This is a guarentee w.r.t. unconverable reward function of teachert.
+			* Sample complexity does not depend on the complexity of teacher's policy \pi^*
+
+	Apprenticeship learning (Read peter abeel's paper)
+		* Assume R_w(s) = w^T \phi(s) for a feature map \phi: S \to R^n
+		* Pick some controller \pi_0
+		* For i = 1,2,...:
+			*Guess the reward function; that is find a reward such that the teacher maximally outperforms all previously found controllers ===
+
+			max_{\gamma, w: \|w\|_2 \leq 1} \gamma
+			st. w^t \mu(\pi^*) \geq w^T \mu(\pi) + \gamma
+
+			* Find the optimal control policy \pi_i for the current guess of the 
+			reward function R_w
+
+			* If \gamma \leq \epsilon/2 exit the algorithm, because we've found an appropriate algorithm? (|w^*^T \mu(\pi) - w^*^T\mu(\pi^*)| \leq \epsilon \not \implies \|\mu(\pi) - \mu(\pi^*)\| \leq \epsilon )
+
+		* Expert policy suboptimality => EXPERT IS IN THE CONVEX HULL OF THE RESULTING CONTROLLERS :(
+
+
+	Min-Max geature expectation matching Syed and Schapire (2008)
+		* Essentially we add the additionall assumption that w\geq 0 and \|w\|_1 = 1.
+		* The idea is that any policy in a certain inverse box performs at least as well as the expert.
+		* How to find policy on pareto optimal curve in this area + corresponding reward function?
+		* Min_w Max \pi w^t mu(\pi) - \mu(\pi*)
+
+		* This essentially uses the ideas behind minimax gamres.
+		* If we set it up this way then we could potentially convert the problem into the following optimization problem. FOrmally
+			min_w max_\lambda w^T G \lambda                 G_{ij} = (\mu(\pi_j) - \mu(\pi*))_i
+
+	Max entropy feature expectation matching -- Ziebart + al, 2008
+		* Feature matching in the suboptimal expert case is very difficult;
+		* Maximize the entropy of distributions over paths followed while satisgying the constraint of feature expectation matching:
+
+			max_P
+
+
+
+
+	
+
+http://ai.stanford.edu/~ang/papers/icml00-irl.pdf
+
+https://www.google.com/search?q=multi+agent+inverse+reinforcement+learning&rlz=1C1CHBF_enUS747US747&oq=multiagent+inverse&aqs=chrome.1.69i57j0.2740j0j7&sourceid=chrome&ie=UTF-8
+
+(Multi agent irl)
+=>
+http://www.utdallas.edu/~sxn177430/Papers/mairl.pdf
+https://arxiv.org/abs/1403.6508
+http://ieeexplore.ieee.org/document/6378020/
+https://people.eecs.berkeley.edu/~dhm/papers/CIRL_NIPS_16.pdf
+https://papers.nips.cc/paper/4737-nonparametric-bayesian-inverse-reinforcement-learning-for-multiple-reward-functions.pdf
+
+
+
+
+https://www.google.com/search?rlz=1C1CHBF_enUS747US747&ei=-KBTWvGgF8T8jwS3oI24Cg&q=large+scale+inverse+reinforcement+learning&oq=large+scale+inverse+reinforcement+learning&gs_l=psy-ab.3..33i21k1.3227.7726.0.7845.25.20.0.0.0.0.261.1886.1j11j2.14.0....0...1c.1.64.psy-ab..11.14.1885...0j0i20i264k1j0i20i263i264k1j0i67k1j0i131k1j0i22i30k1j33i22i29i30k1j33i160k1.0.Fzv3nnHDhAE
+
+(large scale inverse reinforcement learning)
+=>
+https://arxiv.org/abs/1707.09394 
+
+
+
+(hierarchical inverse reinforcement learning)
+https://arxiv.org/pdf/1604.06508.pdf

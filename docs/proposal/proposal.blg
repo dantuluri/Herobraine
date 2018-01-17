@@ -1,0 +1,10 @@
+This is BibTeX, Version 0.99dThe top-level auxiliary file: proposal.aux
+The style file: plainnat.bst
+I couldn't open database file bib.bib
+---line 21 of file proposal.aux
+ : \bibdata{bib
+ :             }
+I'm skipping whatever remains of this command
+I found no \citation commands---while reading file proposal.aux
+I found no database files---while reading file proposal.aux
+(There were 3 error messages)
