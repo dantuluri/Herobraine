@@ -74,7 +74,7 @@ Despite its numerous applications and avantages, IRL is an underconstrained opti
 \end{equation}
 where $s_t \sim T(s_{t-1}, a_{t-1}), a_t \sim \pi(\cdot | s_t),$ and $s_0 \sim D.$ In this setup, it is clear that degenerate reward functions such as $R = 0$ suffice in explainig $\pi^*.$ Constraining the space of candidate reward functions has therefore become central problem in inverse reinforcement learning. 
 
-\todo{Previous research on reward constraints, plus hook.}
+% \todo{Previous research on reward constraints, plus hook.}
 
 
 % \todo{Provide a slightly more formal perspectrive to motivate why these methods could be interesting?}
@@ -104,9 +104,13 @@ Over the duration of the project, we will host a minecraft server which records 
 
 \subsection{Experiments}
 
-The proposed project will consist of multiple experiments for testing the efficacy of the developed algorithms. In particular we will 
+The proposed project will consist of multiple experiments for testing the efficacy of the MIRL. 
 
-\subsection{Metrics}
+1. \textbf{Single Player Expeirment.} Using the existing dataset, we will compare several techniques including inverse reinforcement learning, behavioral cloning, DAGGer, and weakly supervised reinforcement learning. After training apprentice agents using the foregoing methods, each will be tested in a single-player instantiation of the minecraft environment and studied observationally and empirically. In particular for the resultant MIRL policies, we will test not only the efficacy of the average policy sampled from the reward space, but also that of the interpolation of several policies via transport in the original domain. Each agent, regardless of algorithm, will be measured according to number of experience points gained, number of deaths, total distance moved, square area explore, and other such similar metrics. Note that although these metrics exists, none of them are sufficient to compose a reward function for an individual player of the game.
+
+2.\textbf{ Multiplayer Experiment.} The strategy of a large portion of policies in an open-world setting relies on communication and collaboration. Therefore, an extension of the single-player experiment will introduce multiple agents learned as a result of MIRL and the foregoing baseline methods. In this experiment $N$ agents will be spawned in the same location and the methods compared according ot their ability to elicit collaboration; i.e., average distance between different agents minimized, building blocks placed in proximity to one another, etc. Additionally the same metrics as suggested in the single player experiment will be used to establish the efficacy of a group of agents spawned using a particular algorithm.
+
+3. \textbf{Large Scale Action Forecasting}. Lastly, as aforementioned, when successful inverse reinforcement learning is a powerful tool for action/trajectory forecasting. Therefore we will measure the efficacy of MIRL incomparison to standard IRL methods  
 
 
 

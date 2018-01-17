@@ -1,15 +1,15 @@
 # Fdb version 3
-["bibtex proposal"] 1516225735 "proposal.aux" "proposal.bbl" "proposal" 1516225736
+["bibtex proposal"] 1516231018 "proposal.aux" "proposal.bbl" "proposal" 1516231018
   "/usr/share/texlive/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1233624470 26816 ffe5423d2019860bad9f54bc402fac15 ""
   "bib.bib" 0 -1 0 ""
-  "proposal.aux" 1516225735 1279 9b33bd1d71b6a627ff386a8e24327d64 ""
+  "proposal.aux" 1516231018 1189 4cb39f5ada74b645ce1a9ff176455d78 ""
   "proposal.bcf" 0 -1 0 ""
   (generated)
   "proposal.blg"
   "proposal.bbl"
-["pdflatex"] 1516225735 "proposal.tex" "/home/madcowd/workspace/cmu/herobraine/docs/proposal/proposal.pdf" "proposal" 1516225736
+["pdflatex"] 1516231018 "proposal.tex" "/home/madcowd/workspace/cmu/herobraine/docs/proposal/proposal.pdf" "proposal" 1516231018
   "/etc/texmf/web2c/texmf.cnf" 1504798613 1101 af7716885e081ab43982cab7b4672c1a ""
-  "/home/madcowd/workspace/cmu/herobraine/docs/proposal/proposal.aux" 1516225735 1279 9b33bd1d71b6a627ff386a8e24327d64 ""
+  "/home/madcowd/workspace/cmu/herobraine/docs/proposal/proposal.aux" 1516231018 1189 4cb39f5ada74b645ce1a9ff176455d78 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1272929888 3287 e6b82fe08f5336d4d5ebc73fb1152e87 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/ecbx1095.tfm" 1136768653 3584 21b378cca2e40816b0e6d74a4dc98f04 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/ecbx1200.tfm" 1136768653 3584 402da0b29eafbad07963b1224b222f18 ""
@@ -209,14 +209,14 @@
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1504798782 3856233 cd3b56bc1649dde2972b8268f4604128 ""
   "macros.sty" 1516209968 6539 03bd8c3c634bb24a0a4d0d341d4a8dfe ""
   "mc_combined.png" 1516220299 2298356 a6b89ea5453cff8cd4cf56eadd2d31dc ""
-  "proposal.aux" 1516225735 1279 9b33bd1d71b6a627ff386a8e24327d64 ""
+  "proposal.aux" 1516231018 1189 4cb39f5ada74b645ce1a9ff176455d78 ""
   "proposal.bbl" 0 -1 0 "bibtex proposal"
-  "proposal.out" 1516225735 210 8d5788cd9ff1eead7755c7625ba73029 ""
-  "proposal.tex" 1516225735 8112 ef099986105dbddeea6dfa49e4b8608f ""
+  "proposal.out" 1516231018 154 11441f97b95ae67eb649dd8d341125b4 ""
+  "proposal.tex" 1516231017 9788 9df6d48d81e6a072ebf2cfa5afb27347 ""
   (generated)
-  "proposal.aux"
-  "proposal.pdf"
-  "proposal.out"
   "/home/madcowd/workspace/cmu/herobraine/docs/proposal/proposal.pdf"
+  "proposal.pdf"
   "/home/madcowd/workspace/cmu/herobraine/docs/proposal/proposal.log"
   "proposal.log"
+  "proposal.out"
+  "proposal.aux"
