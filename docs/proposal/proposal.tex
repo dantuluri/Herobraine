@@ -61,8 +61,16 @@ Will, can you put together a quick 1.5-2 page proposal on inverse RL, Frank from
 
 \todo{Introduction to inverse reinforcement learning; what has it done?}
 
-Over recent years inverse reinforcement learning (IRL) has revolutionized the state of the art in apprenticeship learning, cooperative and adversarial modeling, and the modeling of intent in human and animal behaviour. 
+Over recent years inverse reinforcement learning (IRL) has revolutionized the state of the art in apprenticeship learning, cooperative and adversarial modeling, and the modeling of intent in human and animal behaviour\todo{cite}. At its core, IRL solves the problem of learning expert policies indirectly: in direct juxtaposition to behavioral cloning IRL learns the reward function of an expert agent and then produces a policy which maximizes that reward. In this regime, the resultant policy is often far more interpratable, robust, and sample efficient than that of behavioural cloning. 
 
+Mechanically, inverse reinforcement learning is optimal not only for cloning expert policies in applications where thousands if not millions of demonstrations are not possible, but also as a substitute for traditional reinforcement learning when exploration is extremely expensive. For example, in robotic manipulation tasks, where typical $\epsilon$-greedy exploration polices would result in potential damage to the robot, apprenticeship learning via IRL is a powerful alternative. Furthermore, by learning the reward function directly, IRL is an effective, interpritable forecasting mechanism in tasks such as epidimiological modeling, traffic prediciton, and first person activity forecasting.\todo{cite}
+
+
+Despite its numerous applications and avantages, IRL is an underconstrained in the sense  
+
+Formally, let $R$
+
+Due to the power of IRL, practitioners have been able to predict traffic patterns, I don't really know what I'm saying with this. So I think the best strategy is to write as much as possible and then cut. How about that. Bullshit whatever but spin this into a narative that you'd tell
 Core to the success of IRL is not only its ability to recapitulate expert policies from a relatively low number of samples but also 
 
 \todo{Provide a slightly more formal perspectrive to motivate why these methods could be interesting?}
