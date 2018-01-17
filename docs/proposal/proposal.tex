@@ -48,25 +48,23 @@
 \maketitle
 \thispagestyle{empty}
 
-\begin{abstract}
-	\todo{
-Will, can you put together a quick 1.5-2 page proposal on inverse RL, Frank from US Army is saying that there is a potential to fund this kind of research: working with simulation environments, working on agents that can plan, communicate, solve slam, build strategies, do reward shaping via inverse RL, etc. They basically want to emphasize: 1, Metrics and Experiments. 2. Describing state-of-the-art in this area, and why what we are proposing is elite and new. Looks like US Army likes very ambitious projects. I will this together into one coherent white paper and we can see whether they would be willing to fund us. If not, we can take the same proposal to someone else as well.
-}
-\end{abstract}
 
 \setcounter{page}{1}
 
 
 \section{Introduction}
 
-\todo{Introduction to inverse reinforcement learning; what has it done?}
-
 Over recent years inverse reinforcement learning (IRL) has revolutionized the state of the art in apprenticeship learning, cooperative and adversarial modeling, and the modeling of intent in human and animal behaviour\todo{cite}. At its core, IRL solves the problem of learning expert policies indirectly: in direct juxtaposition to behavioral cloning IRL learns the reward function of an expert agent and then produces a policy which maximizes that reward. In this regime, the resultant policy is often far more interpratable, robust, and sample efficient than that of behavioural cloning. 
 
 Mechanically, inverse reinforcement learning is optimal not only for cloning expert policies in applications where thousands if not millions of demonstrations are not possible, but also as a substitute for traditional reinforcement learning when exploration is extremely expensive. For example, in robotic manipulation tasks, where typical $\epsilon$-greedy exploration polices would result in potential damage to the robot, apprenticeship learning via IRL is a powerful alternative. Furthermore, by learning the reward function directly, IRL is an effective, interpritable forecasting mechanism in tasks such as epidimiological modeling, traffic prediciton, and first person activity forecasting.\todo{cite}
 
 
-Despite its numerous applications and avantages, IRL is an underconstrained in the sense  
+Despite its numerous applications and avantages, IRL is an underconstrained optimzation problem; in particular, there are potentially inifinitely many reward functions which explain an expert policies behaviour. To see this formally, let $(S,A,T,\gamma,D)$ be a rewardless Markov deciion process (MDP) with state space $S$, action space $A$, state-to-state transition function $T$, $\gamma$ some marginal utility discount, and $D$ an initial state distribution. Given some expert policy $\pi^*(a | s )$, where $a \in A, s \in S$, inverse reinforcement learning aims to find a reward function $R: S \times A \to \mathbb{R}$ such that 
+\begin{equation}
+	\pi^* = \arg \max_{\pi} \mathbb{E}\left[\sum_{t=1}^\infty \gamma^t  R(s_t, a_t)\right]
+\end{equation}
+where $s_t \sim T(s_{t-1}, a_{t-1}), a_t \sim \pi(\cdot | s_t),$ and $s_0 \sim D.$ In this setup, it is clear that degenerate reward functions such as $R = 0$ suffice in explainig $\pi^*.$ Constraining the space of candidate reward functions has therefore become central to the application of inverse reinforcement learning. 
+
 
 Formally, let $R$
 
