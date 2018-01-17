@@ -10,6 +10,7 @@
 \usepackage{array, booktabs}
 \usepackage{graphicx}
 \usepackage{colortbl}
+\usepackage{wrapfig}
 \usepackage[TS1,T1]{fontenc}
 
 
@@ -30,8 +31,8 @@
 
 \title{
  \begin{minipage}[c]{1.05\textwidth}
- 	\centerline{Massively Multiagent Hierarchical Inverse}
- 	\centerline{Reinforcement Learning in Open-world Environments}
+ 	\centerline{Massively Multiagent Inverse Reinforcement}
+ 	\centerline{ Learning in Open-world Environments}
  \end{minipage}
 }
 
@@ -52,6 +53,14 @@
 \setcounter{page}{1}
 
 
+
+\vspace{-10pt}
+\belowcaptionskip -21pt
+\begin{wrapfigure}{r}{0.48\textwidth}
+\centering \includegraphics[width=0.47\textwidth]{mc_combined.png}
+\caption{An example of different states in Minecraft, such as resource gathering, environment discruction, combat, building, and mining.}
+\end{wrapfigure}
+
 \section{Introduction}
 
 Over recent years inverse reinforcement learning (IRL) has revolutionized the state of the art in apprenticeship learning, cooperative and adversarial modeling, and the modeling of intent in human and animal behaviour\todo{cite}. At its core, IRL solves the problem of learning expert policies indirectly: in direct juxtaposition to behavioral cloning IRL learns the reward function of an expert agent and then produces a policy which maximizes that reward. In this regime, the resultant policy is often far more interpratable, robust, and sample efficient than that of behavioural cloning. 
@@ -63,30 +72,39 @@ Despite its numerous applications and avantages, IRL is an underconstrained opti
 \begin{equation}
 	\pi^* = \arg \max_{\pi} \mathbb{E}\left[\sum_{t=1}^\infty \gamma^t  R(s_t, a_t)\right]
 \end{equation}
-where $s_t \sim T(s_{t-1}, a_{t-1}), a_t \sim \pi(\cdot | s_t),$ and $s_0 \sim D.$ In this setup, it is clear that degenerate reward functions such as $R = 0$ suffice in explainig $\pi^*.$ Constraining the space of candidate reward functions has therefore become central to the application of inverse reinforcement learning. 
+where $s_t \sim T(s_{t-1}, a_{t-1}), a_t \sim \pi(\cdot | s_t),$ and $s_0 \sim D.$ In this setup, it is clear that degenerate reward functions such as $R = 0$ suffice in explainig $\pi^*.$ Constraining the space of candidate reward functions has therefore become central problem in inverse reinforcement learning. 
+
+\todo{Previous research on reward constraints, plus hook.}
 
 
-Formally, let $R$
-
-Due to the power of IRL, practitioners have been able to predict traffic patterns, I don't really know what I'm saying with this. So I think the best strategy is to write as much as possible and then cut. How about that. Bullshit whatever but spin this into a narative that you'd tell
-Core to the success of IRL is not only its ability to recapitulate expert policies from a relatively low number of samples but also 
-
-\todo{Provide a slightly more formal perspectrive to motivate why these methods could be interesting?}
+% \todo{Provide a slightly more formal perspectrive to motivate why these methods could be interesting?}
 
 
-\todo{Introduce the problem statement, what is the problem of massively multiagent hierarchical reinforcement learning in open-world environments and why would this be pertinent.}
+% \todo{Introduce the problem statement, what is the problem of massively multiagent hierarchical reinforcement learning in open-world environments and why would this be pertinent.}
 
-\todo{Introduce the implications of solving the MMHIRL problem in open-world environments, potentially reference the taxi problem.}
+% \todo{Introduce the implications of solving the MMHIRL problem in open-world environments, potentially reference the taxi problem.}
 
 
 \section{Our Approach}
 
-\todo{To solve the problem of MMHIRL we will introduce methods which take advantage of the local connectedness of parameterized policy and reward space.}
+In this project we propose a novel approach the problem of reward space regularization by leveraging the statistical power of large scale massively multiexpert policy trajectories in open-world environments. In particular, we will develop new algorithms which allow inverse reinforcement learning to utilize policy rollouts from multiple distinct experts whose reward functions are assumed to be samples from some continuously parameterized manifold of reward functions. Thereafter, we will develop a cloud-based massively multiplayer environment to record a sufficiently rich dataset of expert trajectories in Minecraft, an open-world game with inductively ambiguous reward structures. Finally, we will apply the foregoing methods to train deep reinforcement learning agents using different player reward functions sampled from the learned reward space. In addition to being introduced to the envrionment, these agents will serve as a benchmark for the efficacy of the inverse reinforcement learning procedure evaluated by several metrics.\\
 
-\todo{}
+
+\noindent\textbf{Multi-reward Inverse Reinforcement Learning}. In contrast to existing methods, our proposed approach, multi-reward inverse reinforcement learning (MIRL), exploits the following fact: although in multiagent open-world environments, each individual agent is governed by its own reward function, between any two agents their respective rewards are similar; that is, there is a semi-continuous parameterization of the space of reward functions over some reasonable population of agents in an open-world environment. This assumption leads to a powerful regularization scheme wherein degeneracy of a particular agents reward function is penalized as that agent's reward must be $\epsilon$-sufficient for explaining the actions of another similar but distinct agent. \\
+
+\noindent \textbf{Open-world environment.} To collect sufficiently realistic and open-world samples for MIRL we will develop a custom extension to the multiplayer version of Minecraft. Minecraft, see Figure 1, is a survival-based sandbox game wherein players are given full agency to build, destroy, and explore their environment. In addition to the huge state space, in an online setting players can fight or collaborate in constructing various buildings, cities, and communities. Generally speaking there is no particular goal, score, or objective\footnote{With the exception of experience, which will be used as a metric for  the evaluation of MIRL.} which governs players actions; that is, each player defines their own reward structure and the game is as seemingly open-world as the real world.
+
+Over the duration of the project, we will host a minecraft server which records every players screen and actions and collates this data into a coherent data-store. At scale we anticipate the server will host more than 1000 unique players generating 30 frames per second each. The resulting dataset of player trajectories will be the largest of its kind. As aforementioned, we will also develop tooling for the introduction of learned agents into the environment with which players will continually interact.
+
+
+% \todo{To solve the problem of MMHIRL we will introduce methods which take advantage of the local connectedness of parameterized policy and reward space.}
+
+% \todo{}
 
 
 \subsection{Experiments}
+
+The proposed project will consist of multiple experiments for testing the efficacy of the developed algorithms. In particular we will 
 
 \subsection{Metrics}
 
