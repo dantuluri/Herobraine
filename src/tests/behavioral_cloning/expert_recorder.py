@@ -3,11 +3,12 @@ The expert recorder.
 """
 import argparse
 import keyboard
-
+import random
 import gym
 import gym_minecraft
-
-from IPython import embed
+import numpy as np
+import time
+import os
 
 BINDINGS = [
     ({'w': 'move 1',
@@ -21,6 +22,9 @@ BINDINGS = [
     ({'space': 'jump 1'}, "jump 0"),
     ({"n": 'attack 1'}, "attack 0"),
     ({"m": 'use 1'}, "use 0")]
+
+SHARD_SIZE = 5000
+RECORD_INTERVAL = 1.0/10.0
 
 def get_options():
     parser = argparse.ArgumentParser(description='Process some integers.')
@@ -55,18 +59,24 @@ def run_recorder(opts):
     keyboard.unhook_all()
     keys_pressed = {}
     action = ""
+    record = False
+    esc = False
 
     def keyboard_hook(event):
         """
         The key manager for interaction with minecraft.
         Allow sfor simultaneous execution of movement 
         """
-        nonlocal action, keys_pressed
+        nonlocal action, keys_pressed, record, esc
         if event.event_type is keyboard.KEY_DOWN:
             keys_pressed[event.name] = True
-        else:
-            del keys_pressed[event.name]
+        else:   
+            if 'r' in keys_pressed: record = not record
+            if '+' in keys_pressed: esc = True
+            if event.name in keys_pressed:
+                del keys_pressed[event.name]
 
+        
         actions_to_process = []
         for kmap, default in BINDINGS:
             pressed = [x for x in kmap if x in keys_pressed]
@@ -75,26 +85,80 @@ def run_recorder(opts):
             else:
                 actions_to_process.append(kmap[pressed[0]])
 
+
         action = "\n".join(actions_to_process)
-        print(action)
-
-
 
     keyboard.hook(keyboard_hook)
 
-    env.reset()
 
+    shard_suffix = ''.join(random.choice('0123456789ABCDEF') for i in range(16))
+    sarsa_pairs = []
+    _old_record = record
     done = False
+    last_action_time = time.time()
+    _last_action = ''
+    _last_obs = env.reset()
+
+
+    no_action = False
+
     while not done:
         env.render()
-        # action = env.action_space.sample()
-        if keys_pressed and action:
-            obs, reward, done, info = env.step(action)
+        
+        # Handle the toggling of different application states
+        if _old_record is not record:
+            print("Recording: ", record)
+            _old_record = record
+        if esc:
+            print("ENDING")
+            done = True
+            break
+
+        #  make actions if and only if 
+        # the awllotted recording interval has past
+        # or instantantelously make actions if we're not recording.
+        cur_time = time.time()
+        if cur_time - last_action_time > RECORD_INTERVAL or not record:
+            if keys_pressed :
+                obs, reward, done, info = env.step(action)
+                no_action = False
+            else:
+                obs, reward, done, info  = env.step(action)
+                no_action = True
+
+            # Record the data
+            if record:
+                # When the agent stops acting, record a no action
+                # Otherwise wait untill it acts again.
+                if ((no_action and _last_action is not action)
+                        or (no_action and not (_last_obs == obs).all())
+                        or not no_action):
+                    sarsa = (obs, action[:])
+                    sarsa_pairs.append(sarsa)
+
+                    print("recording", len(sarsa_pairs))
+
+            # Update the action time.
+            last_action_time = cur_time
+            _last_action = action
+            _last_obs = obs
         else:
-            env.step(action)
+            env.step(_last_action)
 
 
     keyboard.unhook(keyboard_hook)
+
+    print("SAVING")
+    # Save out recording data.
+    num_shards = int(np.ceil(len(sarsa_pairs)/SHARD_SIZE))
+    for shard_iter in range(num_shards):
+        shard = sarsa_pairs[
+            shard_iter*SHARD_SIZE: min(
+                (shard_iter+1)*SHARD_SIZE, len(sarsa_pairs))]
+
+        shard_name = "{}_{}.npy".format(str(shard_iter), shard_suffix)
+        with open(os.path.join(ddir, shard_name), 'wb') as f:
+            np.save(f, sarsa_pairs)
 
 if __name__ == "__main__":
     opts = get_options()
