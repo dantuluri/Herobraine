@@ -10,21 +10,15 @@ import numpy as np
 import time
 import os
 
-BINDINGS = [
-    ({'w': 'move 1',
-    "s": 'move -1'}, "move 0"),
-    ({"a": 'strafe -1',
-    "d": 'strafe 1'}, "strafe 0"),
-    ({ "k": 'pitch 1',
-    "i": 'pitch -1'}, "pitch 0"),
-    ({"l": 'turn 1',
-    "j": 'turn -1'}, "turn 0"),
-    ({'space': 'jump 1'}, "jump 0"),
-    ({"n": 'attack 1'}, "attack 0"),
-    ({"m": 'use 1'}, "use 0")]
+from config import (
+    GYM_RESOLUTION,
+    MALMO_IP,
+    BINDINGS,
+    SHARD_SIZE,
+    RECORD_INTERVAL)
 
-SHARD_SIZE = 5000
-RECORD_INTERVAL = 1.0/10.0
+
+
 
 def get_options():
     parser = argparse.ArgumentParser(description='Process some integers.')
@@ -49,7 +43,7 @@ def run_recorder(opts):
         start_minecraft=None,
         client_pool=[('127.0.0.1', 10000)],
         continuous_discrete = True,
-        videoResolution=(128*2,96*2),
+        videoResolution=GYM_RESOLUTION,
         add_noop_command=True)
 
     ##############
