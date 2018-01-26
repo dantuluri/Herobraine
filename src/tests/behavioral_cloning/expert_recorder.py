@@ -43,7 +43,7 @@ def run_recorder(opts):
         start_minecraft=None,
         client_pool=[('127.0.0.1', 10000)],
         continuous_discrete = True,
-        videoResolution=GYM_RESOLUTION,
+        videoResolution=(GYM_RESOLUTION[1], GYM_RESOLUTION[0]),
         add_noop_command=True)
 
     ##############
