@@ -55,6 +55,7 @@ def run_recorder(opts):
     action = ""
     record = False
     esc = False
+    inSequence = False
 
     def keyboard_hook(event):
         """
@@ -107,6 +108,11 @@ def run_recorder(opts):
             print("ENDING")
             done = True
             break
+        if breakSeq:
+            print("Sequence Over")
+            sarsa_pairs.append(None,None)
+            in_sequence = False
+
 
         #  make actions if and only if 
         # the awllotted recording interval has past
