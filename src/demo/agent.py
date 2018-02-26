@@ -9,7 +9,9 @@ from config import (
     FC_SIZES,
     LEARNING_RATE,
     DROPOUT,
-    PIXEL_RESOLUTION)
+    PIXEL_RESOLUTION,
+    NUM_LSTM_UNITS,
+    MAX_SEQUENCE_LENGTH)
 
 class Agent:
     """
@@ -41,7 +43,7 @@ class Agent:
         Creates the model.
         Returns: state_placeholder, action output tensor.
         """
-        state_ph = tf.placeholder(tf.float32, shape=[None] + self.state_space)
+        state_ph = tf.placeholder(tf.float32, shape=[None, MAX_SEQUENCE_LENGTH, self.state_space)
         training_ph = tf.placeholder(tf.bool)
 
         filter_size = max(self.state_space[:-1])
