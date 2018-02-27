@@ -97,7 +97,7 @@ def run_recorder(opts):
     no_action = False
 
     while not done:
-        env.render()
+        env.render(mode='human')
         
         # Handle the toggling of different application states
         if _old_record is not record:
