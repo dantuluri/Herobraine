@@ -17,7 +17,7 @@ Open Power Shell as Administrator:
     Set-ExecutionPolicy -Scope CurrentUser Unrestricted
     cd $env:HOMEPATH\Malmo-0.31.0-Windows-64bit_Python3.6\scripts
     .\malmo_install.ps1
-    cd ../../
+    cd ../
     git clone git@github.com:MadcowD/Herobraine.git
     cd ./src/minecraft-py/
     python settup.py install
