@@ -30,7 +30,8 @@ def get_options():
 
 
 def randomAction():
-    perturbation_space = {"k", "i", "j", "l"}
+    perturbation_space = {"turn -1", "turn 1", "pitch -1", "pitch 1"}
+    return perturbation_space[random.randint(0,len(perturbation_space)-1)]
     
 
 def run_recorder(opts):
@@ -60,7 +61,7 @@ def run_recorder(opts):
     esc = False
     toggleSeq = False
     inSequence = False
-    seqId = 0
+    seqID = 0
 
     def keyboard_hook(event):
         """
@@ -116,11 +117,16 @@ def run_recorder(opts):
             break
         if toggleSeq:
             if inSequence:
-                print("Sequence " + str(seqId) + " Recorded")
-                sarsa_pairs.append(seqID,None)
+                print("Sequence " + str(seqID) + " Recorded")
+                sarsa_pairs.append(seqID, None)
+                in_sequence = False
+            else :
+                print("Started Recording Sequence " + str(seqID))
+                sarsa_pairs.append(seqID, None)
+                in_sequence = True
             for _ in range(RANDOM_PERTURBATION_LEN):
                 env.step(randomAction())
-            in_sequence = False
+            toggleSeq = False
 
 
         #  make actions if and only if 
