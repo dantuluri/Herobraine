@@ -15,9 +15,8 @@ from config import (
     MALMO_IP,
     BINDINGS,
     SHARD_SIZE,
-    RECORD_INTERVAL)
-
-
+    RECORD_INTERVAL,
+    RANDOM_PERTURBATION_LEN)
 
 
 def get_options():
@@ -29,6 +28,10 @@ def get_options():
 
     return args
 
+
+def randomAction():
+    perturbation_space = {"k", "i", "j", "l"}
+    
 
 def run_recorder(opts):
     """
@@ -55,12 +58,14 @@ def run_recorder(opts):
     action = ""
     record = False
     esc = False
+    toggleSeq = False
     inSequence = False
+    seqId = 0
 
     def keyboard_hook(event):
         """
         The key manager for interaction with minecraft.
-        Allow sfor simultaneous execution of movement 
+        Allows for simultaneous execution of movement 
         """
         nonlocal action, keys_pressed, record, esc
         if event.event_type is keyboard.KEY_DOWN:
@@ -68,6 +73,7 @@ def run_recorder(opts):
         else:   
             if 'r' in keys_pressed: record = not record
             if '+' in keys_pressed: esc = True
+            if '=' in keys_pressed: toggleSeq = True
             if event.name in keys_pressed:
                 del keys_pressed[event.name]
 
@@ -98,7 +104,7 @@ def run_recorder(opts):
     no_action = False
 
     while not done:
-        env.render()
+        env.render(mode = 'human')
         
         # Handle the toggling of different application states
         if _old_record is not record:
@@ -108,9 +114,12 @@ def run_recorder(opts):
             print("ENDING")
             done = True
             break
-        if breakSeq:
-            print("Sequence Over")
-            sarsa_pairs.append(None,None)
+        if toggleSeq:
+            if inSequence:
+                print("Sequence " + str(seqId) + " Recorded")
+                sarsa_pairs.append(seqID,None)
+            for _ in range(RANDOM_PERTURBATION_LEN):
+                env.step(randomAction())
             in_sequence = False
 
 
