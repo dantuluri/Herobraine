@@ -23,7 +23,7 @@ SHARD_SIZE = 5000
 RECORD_INTERVAL = 1.0/10.0
 EPISODE_LENGTH = 1200
 RANDOM_PERTURBATION_LEN = 10
-PETURB_SPACE = {"turn -1", "turn 1", "pitch -1", "pitch 1"}
+PETURB_SPACE = ["turn -1", "turn 1", "pitch -1", "pitch 1"]
 
 # HYPERPARAMETERS
 SMALLEST_FEATURE_MAP = 9
