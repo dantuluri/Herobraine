@@ -18,12 +18,21 @@ BINDINGS = [
     ({'space': 'jump 1'}, "jump 0"),
     ({"n": 'attack 1'}, "attack 0"),
     ({"m": 'use 1'}, "use 0")]
+
+BINDINGS_NEW = [{ 'w':'move 1', 'a':'strafe -1', 's':'move -1', 'd':'strafe 1', ' ':'jump 1',
+     "k": 'pitch 1', 'i': 'pitch -1', "l": 'turn 1', "j": 'turn -1', "n": 'attack 1',
+     "m": 'use 1'},
+     { 'w':'move 0', 'a':'strafe 0', 's':'move 0', 'd':'strafe 0', ' ':'jump 0',
+     "k": 'pitch 0', 'i': 'pitch 0', "l": 'turn 0', "j": 'turn 0', "n": 'attack 0',
+     "m": 'use 0'}]
+
     
 SHARD_SIZE = 5000
 RECORD_INTERVAL = 1.0/10.0
 EPISODE_LENGTH = 1200
 RANDOM_PERTURBATION_LEN = 10
 PETURB_SPACE = ["turn -1", "turn 1", "pitch -1", "pitch 1"]
+DATA_DIR = "./"
 
 # HYPERPARAMETERS
 SMALLEST_FEATURE_MAP = 9
