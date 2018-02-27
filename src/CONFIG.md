@@ -13,7 +13,7 @@ Root Dir/
 
 Open Power Shell as Administrator:
 
-    pip instal keyboard pygame gym
+    pip install keyboard pygame gym
     Set-ExecutionPolicy -Scope CurrentUser Unrestricted
     cd $env:HOMEPATH\Malmo-0.31.0-Windows-64bit_Python3.6\scripts
     .\malmo_install.ps1
