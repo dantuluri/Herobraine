@@ -16,6 +16,7 @@ from config import (
     BINDINGS,
     SHARD_SIZE,
     RECORD_INTERVAL,
+    PETURB_SPACE,
     RANDOM_PERTURBATION_LEN)
 
 
@@ -30,8 +31,7 @@ def get_options():
 
 
 def randomAction():
-    perturbation_space = {"turn -1", "turn 1", "pitch -1", "pitch 1"}
-    return perturbation_space[random.randint(0,len(perturbation_space)-1)]
+    return PETURB_SPACE[random.randint(0,len(PETURB_SPACE)-1)]
     
 
 def run_recorder(opts):
