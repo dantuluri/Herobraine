@@ -15,9 +15,7 @@ from config import (
     MALMO_IP,
     BINDINGS,
     SHARD_SIZE,
-    RECORD_INTERVAL,
-    PETURB_SPACE,
-    RANDOM_PERTURBATION_LEN)
+    RECORD_INTERVAL)
 
 
 def get_options():
@@ -28,11 +26,7 @@ def get_options():
     args = parser.parse_args()
 
     return args
-
-
-def randomAction():
-    return PETURB_SPACE[random.randint(0,len(PETURB_SPACE)-1)]
-    
+   
 
 def run_recorder(opts):
     """
@@ -59,9 +53,6 @@ def run_recorder(opts):
     action = ""
     record = False
     esc = False
-    toggleSeq = False
-    inSequence = False
-    seqID = 0
 
     def keyboard_hook(event):
         """
@@ -71,10 +62,10 @@ def run_recorder(opts):
         nonlocal action, keys_pressed, record, esc
         if event.event_type is keyboard.KEY_DOWN:
             keys_pressed[event.name] = True
-        else:   
+        else: 
+            print (event.event_type,event.name)
             if 'r' in keys_pressed: record = not record
             if '+' in keys_pressed: esc = True
-            if '=' in keys_pressed: toggleSeq = True
             if event.name in keys_pressed:
                 del keys_pressed[event.name]
 
@@ -84,11 +75,12 @@ def run_recorder(opts):
             pressed = [x for x in kmap if x in keys_pressed]
             if len(pressed) > 1 or len(pressed) == 0:
                 actions_to_process.append(default)
-            else:
+            else:   
                 actions_to_process.append(kmap[pressed[0]])
 
 
         action = "\n".join(actions_to_process)
+        
 
     keyboard.hook(keyboard_hook)
 
@@ -115,19 +107,6 @@ def run_recorder(opts):
             print("ENDING")
             done = True
             break
-        if toggleSeq:
-            if inSequence:
-                print("Sequence " + str(seqID) + " Recorded")
-                sarsa_pairs.append(seqID, None)
-                in_sequence = False
-            else :
-                print("Started Recording Sequence " + str(seqID))
-                sarsa_pairs.append(seqID, None)
-                in_sequence = True
-            for _ in range(RANDOM_PERTURBATION_LEN):
-                env.step(randomAction())
-            toggleSeq = False
-
 
         #  make actions if and only if 
         # the awllotted recording interval has past
@@ -135,6 +114,7 @@ def run_recorder(opts):
         cur_time = time.time()
         if cur_time - last_action_time > RECORD_INTERVAL or not record:
             if keys_pressed :
+              
                 obs, reward, done, info = env.step(action)
                 no_action = False
             else:
