@@ -400,9 +400,10 @@ else:
 
 
     my_mission = MalmoPython.MissionSpec()
+    my_mission.createDefaultTerrain()
     my_mission.setSummary('A sample mission - run onto the gold block')
     my_mission.requestVideo( 640, 480 )
-    my_mission.timeLimitInSeconds( 30 )
+    my_mission.timeLimitInSeconds( 1000 )
     my_mission.allowAllChatCommands()
     my_mission.allowAllInventoryCommands()
     my_mission.setTimeOfDay( 1000, False )
