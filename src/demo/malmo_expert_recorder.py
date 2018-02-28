@@ -51,8 +51,6 @@ from config import (
     BINDINGS_NEW,
     SHARD_SIZE,
     RECORD_INTERVAL,
-    PETURB_SPACE,
-    RANDOM_PERTURBATION_LEN,
     DATA_DIR)
 
 
@@ -285,8 +283,8 @@ class HumanAgentHost(object):
                         rotation_speed = 0.1
                         turn_speed = ( self.mouse_event.x - self.prev_mouse_event.x ) * rotation_speed
                         pitch_speed = ( self.mouse_event.y - self.prev_mouse_event.y ) * rotation_speed
-                        self.agent_host.sendCommand( 'turn '+str(turn_speed) )
-                        self.agent_host.sendCommand( 'pitch '+str(pitch_speed) )
+                        self.agent_host.sendCommand( 'turn ' + str(turn_speed) )
+                        self.agent_host.sendCommand( 'pitch ' + str(pitch_speed) )
                         self.mouse_movement_turn += turn_speed
                         self.mouse_movement_pitch += pitch_speed
                 if self.mouse_event:
@@ -424,5 +422,6 @@ else:
     #my_mission_record.recordMP4( 20, 400000 )
     #my_mission_record.recordRewards()
     #my_mission_record.recordObservations()
+    
 
-    human_agent_host.runMission( my_mission, my_mission_record, role = my_role )
+    human_agent_host.runMission( my_mission, MalmoPython.MissionRecordSpec(), role = my_role )
