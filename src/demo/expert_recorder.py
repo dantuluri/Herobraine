@@ -63,7 +63,6 @@ def run_recorder(opts):
         if event.event_type is keyboard.KEY_DOWN:
             keys_pressed[event.name] = True
         else: 
-            print (event.event_type,event.name)
             if 'r' in keys_pressed: record = not record
             if '+' in keys_pressed: esc = True
             if event.name in keys_pressed:
