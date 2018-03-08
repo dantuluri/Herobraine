@@ -4,9 +4,9 @@
 
 The experiment will be broken into a series of phases in which a new
 agent (so to speak) is introduced to one contiguous narrative. Technically
-we will continuously maintain a Minecraft server (version 1.8) and let
-these agents interact with the server and eachother as they learn according
-to the regime we provide. There really isn't a goal here, we just want to see 
-what the hell happens when you actually stress tess these agents. We'd be
+we will maintain a Minecraft server (version 1.12.2) and let
+these agents interact with the server and others as they learn according
+to the human examples we provide. There really isn't a goal here, we just 
+want to see what the hell you do when you stress tess these agents. We'd be
 really happy to see the community contribute other agents to the narrative,
 but for now we're attempting to stress test the standard set of algorithms.
