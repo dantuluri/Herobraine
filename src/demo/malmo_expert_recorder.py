@@ -65,7 +65,9 @@ class HumanAgentHost(object):
         self.mouse_movement_turn = 0
         self.mouse_movement_pitch = 0
         self.sarsa_pairs = []
-        self.shard_suffix = ''.join(random.choice('0123456789ABCDEF') for i in range(16))
+        self.shard_suffix = ''.join(random.choice('0123456789ABCDEF') for i in range(16)) #TODO Make this based on recording date
+        self.seq_id = 0
+        self.recording = False
 
     def save(self):
         print("SAVING")
@@ -79,6 +81,22 @@ class HumanAgentHost(object):
             shard_name = "{}_{}.npy".format(str(shard_iter), self.shard_suffix)
             with open(os.path.join(DATA_DIR, shard_name), 'wb') as f:
                 np.save(f, self.sarsa_pairs)
+
+    def toggle_recording(self):
+        self.recoding = not self.recording
+        if not self.recording:
+            self.save()
+        pass
+
+    def start_sequence(self):
+        self.seq_id += 1
+        self.keys_pressed['['+ str(self.seq_id)] = True
+        pass
+
+    def stop_sequence(self):
+        self.keys_pressed[']' + str(self.seq_id)] = True
+        self.seq_id += 1
+        pass
 
     def parse( self, args ):
         '''Parses the command-line arguments.
@@ -285,8 +303,9 @@ class HumanAgentHost(object):
                         pitch_speed = ( self.mouse_event.y - self.prev_mouse_event.y ) * rotation_speed
                         self.agent_host.sendCommand( 'turn ' + str(turn_speed) )
                         self.agent_host.sendCommand( 'pitch ' + str(pitch_speed) )
-                        self.mouse_movement_turn += turn_speed
-                        self.mouse_movement_pitch += pitch_speed
+                        if(self.recording):
+                            self.mouse_movement_turn += turn_speed
+                            self.mouse_movement_pitch += pitch_speed
                 if self.mouse_event:
                     if os.name == 'nt': # (moving the mouse cursor only seems to work on Windows)
                         self.canvas.event_generate('<Motion>', warp=True, x=old_div(self.canvas.winfo_width(),2), y=old_div(self.canvas.winfo_height(),2)) # put cursor at center
@@ -332,7 +351,9 @@ class HumanAgentHost(object):
            
     def onKeyPressInCanvas(self, event):
         '''Called when a key is pressed when the canvas has focus.'''
-        self.keys_pressed[event.char] = True
+        if self.recording:
+            self.keys_pressed[event.char + '_down'] = True
+
         char_map = BINDINGS_NEW[0]#{ 'w':'move 1', 'a':'strafe -1', 's':'move -1', 'd':'strafe 1', ' ':'jump 1' }
         keysym_map = { 'continuous': { 'Left':'turn -1', 'Right':'turn 1', 'Up':'pitch -1', 'Down':'pitch 1', 'Shift_L':'crouch 1',
                                        'Shift_R':'crouch 1', 
@@ -343,6 +364,12 @@ class HumanAgentHost(object):
                                        '6':'hotbar.6 1', '7':'hotbar.7 1', '8':'hotbar.8 1', '9':'hotbar.9 1' } }
         if event.char == '/':
             self.command_entry.focus_set() # interlude to allow user to type command
+        elif event.char == '=':
+            self.toggle_recording()
+        elif event.char == '[':
+            self.start_sequence()
+        elif event.char == ']':
+            self.stop_sequence()
         elif event.char.lower() in char_map:
             self.agent_host.sendCommand( char_map[ event.char.lower() ] )
         elif event.keysym in keysym_map[self.action_space]:
@@ -350,6 +377,7 @@ class HumanAgentHost(object):
 
     def onKeyReleaseInCanvas(self, event):
         '''Called when a key is released when the command entry box has focus.'''
+        self.keys_pressed[event.char + '_up'] = True
         char_map = BINDINGS_NEW[1]#{ 'w':'move 0', 'a':'strafe 0', 's':'move 0', 'd':'strafe 0', ' ':'jump 0' }
         keysym_map = { 'Left':'turn 0', 'Right':'turn 0', 'Up':'pitch 0', 'Down':'pitch 0', 'Shift_L':'crouch 0', 'Shift_R':'crouch 0', 
                        '1':'hotbar.1 0', '2':'hotbar.2 0', '3':'hotbar.3 0', '4':'hotbar.4 0', '5':'hotbar.5 0',
