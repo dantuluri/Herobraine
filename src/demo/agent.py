@@ -36,9 +36,9 @@ class Agent:
 
     
     # Current approach - use the tuple type to support arbitrary sequence lengths
-    # Take the input (shape = [sequence_len, batch_size] + self.state_space) and flatten to
+    # Take the input (shape = [batch_size, sequence_len] + self.state_space) and flatten to
     # [sequence_len * batch_size] + self.state_space to do the convolutional layers and some
-    # fully connected layers. Then map this back to [sequence_len, batch_size, num_neruons] 
+    # fully connected layers. Then map this back to [batch_size, sequence_len, num_neruons] 
     # and apply lstm layer using mapfn to introduce the remaining time independent layers 
     def create_model(self):
         """
@@ -46,14 +46,14 @@ class Agent:
         Returns: state_placeholder, action output tensor.
         """        
         
-        # Input Placeholder (time, batch, [state])
+        # Input Placeholder (batch, time, [state])
         state_ph = tf.placeholder(tf.float32, shape=[None] + [None] + self.state_space)
 
         # Training Flag
         training_ph = tf.placeholder(tf.bool)
 
         # Hidden state Placeholder 
-        batch_size    = tf.shape(state_ph)[1]
+        batch_size    = tf.shape(state_ph)[0]
         #initial_state = tf.placeholder(tf.float32, shape=[None] + self.lstm_hidden_size)
 
 
@@ -102,13 +102,13 @@ class Agent:
         # Reshape the data to retain sequence classification
         with tf.variable_scope("map_sequences")
             num_neurons = np.prod(head.get_shape().as_list()[1:])
-            head = tf.reshape(head, [-1, batch_size, num_neurons])
+            head = tf.reshape(head, [batch_size, -1, num_neurons])
 
         # Introduce lstm layer
         with tf.variable_scope('lstm'):
             cell = tf.nn.rnn_cell.BasicLSTMCell(RNN_HIDDEN, state_is_tuple=True)
             initial_state = cell.zero_state(batch_size, tf.float32)
-            head, lstm_states = tf.nn.dynamic_rnn(cell, head, initial_state=initial_state, time_major=True)
+            head, lstm_states = tf.nn.dynamic_rnn(cell, head, initial_state=initial_state, time_major=False)
 
         # Apply dropout
         dropout = lambda x : tf.layers.dropout(inputs=x, rate=DROPOUT, training=training_ph)
@@ -122,19 +122,23 @@ class Agent:
 
         # Apply selective softmax accordin to various XOR conditions on the output
         with tf.variable_scope("action"):
-            action = []
-            subspace_iter = 0
+            actions = []
+            for _ in range(batch_size):
+                action = []
+                subspace_iter = 0
 
-            for space in self.action_space:
-                logits = head[:, subspace_iter:subspace_iter+space]
-                # Note: we could also collect probabilities:
-                probabilities = tf.nn.softmax(logits)
-                argmax = tf.argmax(input=logits, axis=1)
-                
-                action.append((logits, argmax, probabilities))
-                subspace_iter += space
+                for space in self.action_space:
+                    logits = head[:, subspace_iter:subspace_iter+space]
+                    # Note: we could also collect probabilities:
+                    probabilities = tf.nn.softmax(logits)
+                    argmax = tf.argmax(input=logits, axis=1)
+                    
+                    action.append((logits, argmax, probabilities))
+                    subspace_iter += space
 
-        return state_ph, training_ph, action
+                actions.append[action]
+
+        return state_ph, training_ph, actions
 
     def create_training(self):
         """
@@ -173,7 +177,7 @@ class Agent:
         """
         Trains the model
         """
-
+        # TODO support dynamic hidden state for inference
         cur_loss, _ = self.sess.run([self.loss, self.train_op], {
             self.training_ph: True,
             self.state_ph:  batch_states,
@@ -197,6 +201,9 @@ class Agent:
         Acts on single or multiple states.
         Returns actions in a onehot 
         """
+
+        # TODO modify to properly handle sequence interactions
+
         # If observations missed.
         assert len(state.shape) >= 3
 
