@@ -61,9 +61,11 @@ class Agent:
         filter_size = max(self.state_space[:-1])
 
         head = state_ph
+        print(head.get_shape())
 
-        # Reshape the data to flatten sequences
-        head = tf.reshape(head, [-1, self.state_space])
+        # # Reshape the data to flatten sequences    
+        #shape = tf.shape(head) 
+        #head = tf.reshape(head, [np.prod(shape[:2]), )
 
         # Normalize the data
         with tf.variable_scope("normalization"):
@@ -75,41 +77,55 @@ class Agent:
         while filter_size > SMALLEST_FEATURE_MAP:
             # Build a convolution
             with tf.variable_scope("conv_block_{}".format(conv_iter)):
-                head = tf.layers.conv2d(
-                    inputs=head,
-                    filters=min(2**conv_iter*16, 64),
-                    kernel_size=[5, 5],
-                    padding="same",
-                    activation=tf.nn.relu)
-                filter_size = min(head.get_shape().as_list()[1:-1])
+                print(head.get_shape())
+                conv_fn = lambda x : \
+                    tf.layers.conv2d(
+                        inputs=x,
+                        filters=min(2**conv_iter*16, 64),
+                        kernel_size=[5, 5],
+                        padding="same",
+                        activation=tf.nn.relu)
+                head = tf.map_fn(conv_fn, head)
+                filter_size = min(head.get_shape().as_list()[2:-1])
 
                 if filter_size > SMALLEST_FEATURE_MAP:
                     # Apply pooling
-                    head = tf.layers.max_pooling2d(inputs=head, pool_size=[2, 2], strides=2)
+                    pooling_fn = lambda x : tf.layers.max_pooling2d(inputs=x, pool_size=[2, 2], strides=2)
+                    head = tf.map_fn(pooling_fn, head)
+                    print(head.get_shape())
+                    print(conv_iter)
 
             conv_iter += 1
-            filter_size = min(head.get_shape().as_list()[1:-1])
+            filter_size = min(head.get_shape().as_list()[2:-1])
             
         # Flatten to fully connected 
+        print(head.get_shape())
         with tf.variable_scope("flatten_fc"):
-            num_neurons = np.prod(head.get_shape().as_list()[1:])
-            head = tf.reshape(head, [-1, num_neurons])
+            num_neurons = np.prod(head.get_shape().as_list()[2  :])
+            flatten_fn = lambda x : tf.reshape(x, [-1, num_neurons])
+            head = tf.map_fn(flatten_fn, head)
+
 
         # Apply some fc layers 
+        print(head.get_shape())
         for i, fc_size in enumerate(FC_SIZES):
             with tf.variable_scope("fc_{}".format(i)):
-                head = tf.layers.dense(inputs=head, units=fc_size, activation=tf.nn.relu)
+                fc_fn = lambda x :  tf.layers.dense(inputs=x, units=fc_size, activation=tf.nn.relu)
+                head = tf.map_fn(fc_fn, head)
 
-        # Reshape the data to retain sequence classification
-        with tf.variable_scope("map_sequences"):
-            num_neurons = np.prod(head.get_shape().as_list()[1:])
-            head = tf.reshape(head, [batch_size, -1, num_neurons])
-
+        # # Reshape the data to retain sequence classification
+        # with tf.variable_scope("map_sequences"):
+        #     num_neurons = np.prod(head.get_shape().as_list()[1:])
+        #     head = tf.reshape(head, [batch_size, -1, num_neurons])
+        
         # Introduce lstm layer
         with tf.variable_scope('lstm'):
             cell = tf.nn.rnn_cell.BasicLSTMCell(LSTM_HIDDEN, state_is_tuple=True)
             initial_state = cell.zero_state(batch_size, tf.float32)
-            head, lstm_states = tf.nn.dynamic_rnn(cell, head, initial_state=initial_state, time_major=False)
+            print(head.get_shape())
+            head, lstm_states = tf.nn.dynamic_rnn(cell, head, initial_state=initial_state, time_major=False, swap_memory=True)
+
+            print(head.get_shape())
 
         # Apply dropout
         dropout = lambda x : tf.layers.dropout(inputs=x, rate=DROPOUT, training=training_ph)
@@ -120,11 +136,13 @@ class Agent:
             num_outputs = sum(self.action_space)
             dense = lambda x : tf.layers.dense(inputs=x, units=num_outputs)
             head = tf.map_fn(dense, head)
+            print(head.get_shape())
+
 
         # Apply selective softmax accordin to various XOR conditions on the output
         with tf.variable_scope("action"):
             actions = []
-            for _ in range(batch_size):
+            for _ in range(tf.shape(head)[0]):
                 action = []
                 subspace_iter = 0
 
@@ -152,7 +170,7 @@ class Agent:
         with tf.variable_scope("label_processing"):
             # Convert it to a onehot.
             sublabels = []
-            for b in range(batch_size):
+            for b in range(tf.shaoe(label_ph)[0]):
                 sublabel = []
                 for i, space in enumerate(self.action_space):
                     with tf.variable_scope("one_hot_{}".format(i)):
