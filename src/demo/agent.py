@@ -163,7 +163,7 @@ class Agent:
         # First create the loss for each subspace.
         with tf.variable_scope("loss"):
             subloss = []
-            for action, sublabel in zip(self.actions, sublabels)
+            for action, sublabel in zip(self.actions, sublabels):
                 for ((logit_subspaces, _, _), labels) in zip(action, sublabel):
                     with tf.variable_scope("subloss_{}".format(len(subloss))):
                         subloss.append(
@@ -216,11 +216,11 @@ class Agent:
         # Handle shape size update if single state
         single_state = len(state.shape) == 3
         if single_state:
-            state = np.expand_dims(state, axis=0)
+            state = np.expand_dims(np.expand_dims(state, axis=0),axis=0)
         
 
         # Feed the state and get the action onehot
-        _, _, probability_subspace = zip(*self.action)
+        _, _, probability_subspace = zip(*self.actions[0])
         subspace_action_prob = self.sess.run(probability_subspace, {
             self.state_ph: state,
             self.training_ph: False

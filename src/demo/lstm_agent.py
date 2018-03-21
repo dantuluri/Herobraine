@@ -30,7 +30,7 @@ class Model(object):
 
 
     # Pass this batch_size manny sequences
-    def train(sequence_list[5]):\
+    def train(sequence_list[5]):
 
         # Goal is to get (hidden_state, [chunk])
 
