@@ -1,5 +1,5 @@
 """
-config.py -- The main configuratio nstore for the behavioral cloning demo.
+config.py -- The main configuration store for the behavioral cloning demo.
 """
 GYM_RESOLUTION = (96*2, 128*2)
 MALMO_IP = ('127.0.0.1', 10000)
@@ -39,4 +39,4 @@ LEARNING_RATE = 1e-3
 DROPOUT=0.5
 BATCH_SIZE = 32
 PIXEL_RESOLUTION = 255.0
-
+LSTM_HIDDEN = 32

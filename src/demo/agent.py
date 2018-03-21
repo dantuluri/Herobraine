@@ -9,7 +9,8 @@ from config import (
     FC_SIZES,
     LEARNING_RATE,
     DROPOUT,
-    PIXEL_RESOLUTION)
+    PIXEL_RESOLUTION,
+    LSTM_HIDDEN)
 
 class Agent:
     """
@@ -106,7 +107,7 @@ class Agent:
 
         # Introduce lstm layer
         with tf.variable_scope('lstm'):
-            cell = tf.nn.rnn_cell.BasicLSTMCell(RNN_HIDDEN, state_is_tuple=True)
+            cell = tf.nn.rnn_cell.BasicLSTMCell(LSTM_HIDDEN, state_is_tuple=True)
             initial_state = cell.zero_state(batch_size, tf.float32)
             head, lstm_states = tf.nn.dynamic_rnn(cell, head, initial_state=initial_state, time_major=False)
 
