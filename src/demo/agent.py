@@ -35,17 +35,34 @@ class Agent:
             self.train_op = self.create_training()
 
     
-
+    # Current approach - use the tuple type to support arbitrary sequence lengths
+    # Take the input (shape = [sequence_len, batch_size] + self.state_space) and flatten to
+    # [sequence_len * batch_size] + self.state_space to do the convolutional layers and some
+    # fully connected layers. Then map this back to [sequence_len, batch_size, num_neruons] 
+    # and apply lstm layer using mapfn to introduce the remaining time independent layers 
     def create_model(self):
         """
         Creates the model.
         Returns: state_placeholder, action output tensor.
-        """
-        state_ph = tf.placeholder(tf.float32, shape=[None] + self.state_space)
+        """        
+        
+        # Input Placeholder (time, batch, [state])
+        state_ph = tf.placeholder(tf.float32, shape=[None] + [None] + self.state_space)
+
+        # Training Flag
         training_ph = tf.placeholder(tf.bool)
 
+        # Hidden state Placeholder 
+        batch_size    = tf.shape(state_ph)[1]
+        #initial_state = tf.placeholder(tf.float32, shape=[None] + self.lstm_hidden_size)
+
+
         filter_size = max(self.state_space[:-1])
+
         head = state_ph
+
+        # Reshape the data to flatten sequences
+        head = tf.reshape(head, [-1, self.state_space])
 
         # Normalize the data
         with tf.variable_scope("normalization"):
@@ -72,24 +89,36 @@ class Agent:
             conv_iter += 1
             filter_size = min(head.get_shape().as_list()[1:-1])
             
-        # Flatten to fully connected
-        with tf.variable_scope("flatten"):
+        # Flatten to fully connected 
+        with tf.variable_scope("flatten_fc"):
             num_neurons = np.prod(head.get_shape().as_list()[1:])
             head = tf.reshape(head, [-1, num_neurons])
 
-        # Apply some fc layers
+        # Apply some fc layers 
         for i, fc_size in enumerate(FC_SIZES):
             with tf.variable_scope("fc_{}".format(i)):
                 head = tf.layers.dense(inputs=head, units=fc_size, activation=tf.nn.relu)
 
+        # Reshape the data to retain sequence classification
+        with tf.variable_scope("map_sequences")
+            num_neurons = np.prod(head.get_shape().as_list()[1:])
+            head = tf.reshape(head, [-1, batch_size, num_neurons])
+
+        # Introduce lstm layer
+        with tf.variable_scope('lstm'):
+            cell = tf.nn.rnn_cell.BasicLSTMCell(RNN_HIDDEN, state_is_tuple=True)
+            initial_state = cell.zero_state(batch_size, tf.float32)
+            head, lstm_states = tf.nn.dynamic_rnn(cell, head, initial_state=initial_state, time_major=True)
+
         # Apply dropout
-        head = tf.layers.dropout(
-            inputs=head, rate=DROPOUT, training=training_ph)
+        dropout = lambda x : tf.layers.dropout(inputs=x, rate=DROPOUT, training=training_ph)
+        head = map_fn(dropout, head)
 
         with tf.variable_scope("fc_final"):
             # Calculate the dimensionality of action space
             num_outputs = sum(self.action_space)
-            head = tf.layers.dense(inputs=head, units=num_outputs)
+            dense = lambda x : tf.layers.dense(inputs=x, units=num_outputs)
+            head = map_fn(dense, head)
 
         # Apply selective softmax accordin to various XOR conditions on the output
         with tf.variable_scope("action"):
@@ -144,12 +173,24 @@ class Agent:
         """
         Trains the model
         """
+
         cur_loss, _ = self.sess.run([self.loss, self.train_op], {
             self.training_ph: True,
-            self.state_ph: batch_states,
-            self.label_ph: batch_labels
+            self.state_ph:  batch_states,
+            self.label_ph:  batch_labels
             })
         return cur_loss
+
+        # batch_states = [(h_i, S_i), (h_j, S_j), ...]
+        # batch_labels = [L_i, L_j, ...]
+
+        # cur_loss, _ = self.sess.run([self.loss, self.train_op], {
+        #     self.training_ph: True,
+        #     self.state_ph:  batch_states,
+        #     self.hidden_ph: hidden_states,
+        #     self.label_ph:  batch_labels
+        #     })
+        # return cur_loss
 
     def act(self, state):
         """
