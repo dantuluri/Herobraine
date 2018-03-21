@@ -62,8 +62,9 @@ def run_training(coord, agent, bc_data_dir, action_map):
                 [actionbd.inv[v] for actionbd, v in zip(action_map, saction)] for saction in split_actions
             ]
             # Add the shard to the dataset
-            states.extend(shard_states)
-            actions.extend(shard_actions)
+            states.append(shard_states)
+            actions.append(shard_actions)
+
 
     states = np.asarray(states, dtype=np.uint8)
     actions = np.asarray(actions, dtype=np.float32)

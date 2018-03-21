@@ -100,7 +100,7 @@ class Agent:
                 head = tf.layers.dense(inputs=head, units=fc_size, activation=tf.nn.relu)
 
         # Reshape the data to retain sequence classification
-        with tf.variable_scope("map_sequences")
+        with tf.variable_scope("map_sequences"):
             num_neurons = np.prod(head.get_shape().as_list()[1:])
             head = tf.reshape(head, [batch_size, -1, num_neurons])
 
@@ -146,7 +146,7 @@ class Agent:
         Returns: loss tensor, training_operation
         """    
         # Create the label placeholder
-        label_ph = tf.placeholder(tf.int32, shape=[None, len(self.action_space)])
+        label_ph = tf.placeholder(tf.int32, shape=[None, None, len(self.action_space)])
         sublabel = []
         with tf.variable_scope("label_processing"):
             # Convert it to a onehot.
