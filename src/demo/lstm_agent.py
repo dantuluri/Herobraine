@@ -15,6 +15,37 @@ class Model(object):
         self.batch_size  = input.batch_size
         self.num_steps   = input.num_steps 
 
+
+    def train(self, batch_states, batch_labels):
+        """
+        Trains the model
+        """
+        
+        cur_loss, _ = self.sess.run([self.loss, self.train_op], {
+            self.training_ph: True,
+            self.state_ph: batch_states,
+            self.label_ph: batch_labels
+            })
+        return cur_loss
+
+
+    # Pass this batch_size manny sequences
+    def train(sequence_list[5]):\
+
+        # Goal is to get (hidden_state, [chunk])
+
+        #Get sequence from random shuffle
+
+        # Take the each max_seq_len bundle ([batch_size, max_seq_len, input_size])
+        for i in sequence_list:
+
+            full_seq.split(500)
+
+        # Call ses.run() on each chunk with the hidden state from previous chunk as activation
+
+
+
+
 # create the word embeddings
 with tf.device("/cpu:0"):
     embedding = tf.Variable(tf.random_uniform([vocab_size, self.hidden_size], -init_scale, init_scale))

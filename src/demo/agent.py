@@ -28,7 +28,7 @@ class Agent:
         with tf.variable_scope("model"):
             self.state_ph, \
             self.training_ph, \
-            self.action = self.create_model()
+            self.actions = self.create_model()
 
         with tf.variable_scope("training"):
             self.label_ph, \
@@ -113,13 +113,13 @@ class Agent:
 
         # Apply dropout
         dropout = lambda x : tf.layers.dropout(inputs=x, rate=DROPOUT, training=training_ph)
-        head = map_fn(dropout, head)
+        head = tf.map_fn(dropout, head)
 
         with tf.variable_scope("fc_final"):
             # Calculate the dimensionality of action space
             num_outputs = sum(self.action_space)
             dense = lambda x : tf.layers.dense(inputs=x, units=num_outputs)
-            head = map_fn(dense, head)
+            head = tf.map_fn(dense, head)
 
         # Apply selective softmax accordin to various XOR conditions on the output
         with tf.variable_scope("action"):
@@ -137,7 +137,7 @@ class Agent:
                     action.append((logits, argmax, probabilities))
                     subspace_iter += space
 
-                actions.append[action]
+                actions.append(action)
 
         return state_ph, training_ph, actions
 
@@ -151,19 +151,24 @@ class Agent:
         sublabel = []
         with tf.variable_scope("label_processing"):
             # Convert it to a onehot.
-            for i, space in enumerate(self.action_space):
-                with tf.variable_scope("one_hot_{}".format(i)):
-                    sublabel.append(
-                        tf.one_hot(indices=tf.cast(label_ph[:,i], tf.int32), depth=space))
+            sublabels = []
+            for b in range(batch_size):
+                sublabel = []
+                for i, space in enumerate(self.action_space):
+                    with tf.variable_scope("one_hot_{}".format(i)):
+                        sublabel.append(
+                            tf.one_hot(indices=tf.cast(label_ph[b,:,i], tf.int32), depth=space))
+                sublabels.append(sublabel)
 
         # First create the loss for each subspace.
         with tf.variable_scope("loss"):
             subloss = []
-            for ((logit_subspace, _, _), label) in zip(self.action, sublabel):
-                with tf.variable_scope("subloss_{}".format(len(subloss))):
-                    subloss.append(
-                        tf.losses.softmax_cross_entropy(
-                            onehot_labels=label, logits=logit_subspace))
+            for action, sublabel in zip(self.actions, sublabels)
+                for ((logit_subspaces, _, _), labels) in zip(action, sublabel):
+                    with tf.variable_scope("subloss_{}".format(len(subloss))):
+                        subloss.append(
+                            tf.losses.softmax_cross_entropy(
+                                onehot_labels=label, logits=logit_subspace))
 
             # Integrate the loss
             loss = tf.add_n(subloss, name="loss")/float(len(subloss))
