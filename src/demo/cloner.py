@@ -185,7 +185,8 @@ def run_demonstrations(coord, agent, action_map):
             if cur_time - last_action_time > RECORD_INTERVAL:
                 # Get the agents action
                 action_index = agent.act(np.asarray(last_obs))
-                action = "\n".join([samap[i] for samap, i in zip(action_map, action_index)])
+                foo = zip(action_map, action_index)
+                action = "\n".join([samap[i] for samap, i in zip(action_map, *action_index)])
 
                 # Step the environment.
                 obs, reward, done, info = env.step(action)

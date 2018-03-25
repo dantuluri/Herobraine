@@ -260,9 +260,9 @@ class Agent:
             self.training_ph: False
             })
 
-        subspace_action_argmax = [
+        subspace_action_argmax = [[
             [np.argmax(np.random.multinomial(1, pvals=v - max(sum(v) -1,0))) for v in sap] 
-            for sap in subspace_action_prob]
+            for sap in ssap] for ssap in subspace_action_prob]
 
         # If it's a single state, return a single action
         # not a list of actions.
