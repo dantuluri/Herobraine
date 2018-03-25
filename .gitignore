@@ -93,3 +93,6 @@ src/Malmo/
 src/Malmo/*
 src/Malmo
 /src/Malmo
+
+# VS code fluf
+/.vscode

@@ -28,12 +28,31 @@ class Agent:
         with tf.variable_scope("model"):
             self.state_ph, \
             self.training_ph, \
+            self.hidden_ph, \
             self.actions = self.create_model()
 
         with tf.variable_scope("training"):
             self.label_ph, \
             self.loss, \
             self.train_op = self.create_training()
+
+    def get_state_variables(self, batch_size, cell):
+        # For each layer, get the initial state and make a variable out of it
+        # to enable updating its value.
+        state_variables = \
+            tf.contrib.rnn.LSTMStateTuple(
+                tf.Variable(state_c, trainable=False),
+                tf.Variable(state_h, trainable=False))
+        # Return as a tuple, so that it can be fed to dynamic_rnn as an initial state
+        return tuple(state_variables)
+
+
+    def get_state_update_op(self, state_variables, new_states):
+        # Add an operation to update the train states with the last state tensors
+        update_ops = [state_variable[0].assign(new_state[0]),
+                            state_variable[1].assign(new_state[1])]
+
+        return update_ops
 
     
     # Current approach - use the tuple type to support arbitrary sequence lengths
@@ -55,7 +74,8 @@ class Agent:
 
         # Hidden state Placeholder 
         batch_size    = tf.shape(state_ph)[0]
-        #initial_state = tf.placeholder(tf.float32, shape=[None] + self.lstm_hidden_size)
+        initial_state_ph = tf.placeholder(tf.float32, shape=[2, None, LSTM_HIDDEN])
+        initial_state = tf.contrib.rnn.LSTMStateTuple(initial_state_ph[0], initial_state_ph[1])
 
 
         filter_size = max(self.state_space[:-1])
@@ -112,20 +132,22 @@ class Agent:
             with tf.variable_scope("fc_{}".format(i)):
                 fc_fn = lambda x :  tf.layers.dense(inputs=x, units=fc_size, activation=tf.nn.relu)
                 head = tf.map_fn(fc_fn, head)
-
-        # # Reshape the data to retain sequence classification
-        # with tf.variable_scope("map_sequences"):
-        #     num_neurons = np.prod(head.get_shape().as_list()[1:])
-        #     head = tf.reshape(head, [batch_size, -1, num_neurons])
         
         # Introduce lstm layer
         with tf.variable_scope('lstm'):
             cell = tf.nn.rnn_cell.BasicLSTMCell(LSTM_HIDDEN, state_is_tuple=True)
             initial_state = cell.zero_state(batch_size, tf.float32)
-            print(head.get_shape())
-            head, lstm_states = tf.nn.dynamic_rnn(cell, head, initial_state=initial_state, time_major=False, swap_memory=True)
 
-            print(head.get_shape())
+            #print (cell.state_size)
+            #print(head.get_shape())
+            head, hidden_state = tf.nn.dynamic_rnn(
+                cell, 
+                head, 
+                initial_state=initial_state, 
+                time_major=False, 
+                swap_memory=True)
+
+            #print(head.get_shape())
 
         # Apply dropout
         dropout = lambda x : tf.layers.dropout(inputs=x, rate=DROPOUT, training=training_ph)
@@ -136,28 +158,25 @@ class Agent:
             num_outputs = sum(self.action_space)
             dense = lambda x : tf.layers.dense(inputs=x, units=num_outputs)
             head = tf.map_fn(dense, head)
-            print(head.get_shape())
+            #print(head.get_shape())
 
 
         # Apply selective softmax accordin to various XOR conditions on the output
         with tf.variable_scope("action"):
-            actions = []
-            for _ in range(tf.shape(head)[0]):
-                action = []
-                subspace_iter = 0
+            #actions = tf.map_fn(self.selective_softmax, head, dtype = tf.float32)
+            action = []
+            subspace_iter = 0
 
-                for space in self.action_space:
-                    logits = head[:, subspace_iter:subspace_iter+space]
-                    # Note: we could also collect probabilities:
-                    probabilities = tf.nn.softmax(logits)
-                    argmax = tf.argmax(input=logits, axis=1)
-                    
-                    action.append((logits, argmax, probabilities))
-                    subspace_iter += space
+            for space in self.action_space:
+                logits = head[:, subspace_iter:subspace_iter+space]
+                # Note: we could also collect probabilities:
+                probabilities = tf.nn.softmax(logits)
+                argmax = tf.argmax(input=logits, axis=2)
+                
+                action.append((logits, argmax, probabilities))
+                subspace_iter += space
 
-                actions.append(action)
-
-        return state_ph, training_ph, actions
+        return state_ph, training_ph, hidden_state, action #TODO ,update_hidden_op
 
     def create_training(self):
         """
@@ -169,24 +188,21 @@ class Agent:
         sublabel = []
         with tf.variable_scope("label_processing"):
             # Convert it to a onehot.
-            sublabels = []
-            for b in range(tf.shaoe(label_ph)[0]):
-                sublabel = []
-                for i, space in enumerate(self.action_space):
-                    with tf.variable_scope("one_hot_{}".format(i)):
-                        sublabel.append(
-                            tf.one_hot(indices=tf.cast(label_ph[b,:,i], tf.int32), depth=space))
-                sublabels.append(sublabel)
+            sublabel = []
+            for i, space in enumerate(self.action_space):
+                with tf.variable_scope("one_hot_{}".format(i)):
+                    one_hot_fn = lambda x : \
+                        tf.one_hot(indices=tf.cast(x[:,i], tf.int32), depth=space)
+                    sublabel.append(tf.unstack(tf.map_fn(one_hot_fn, label_ph),axis=2))
 
         # First create the loss for each subspace.
         with tf.variable_scope("loss"):
             subloss = []
-            for action, sublabel in zip(self.actions, sublabels):
-                for ((logit_subspaces, _, _), labels) in zip(action, sublabel):
-                    with tf.variable_scope("subloss_{}".format(len(subloss))):
-                        subloss.append(
-                            tf.losses.softmax_cross_entropy(
-                                onehot_labels=label, logits=logit_subspace))
+            for ((logit_subspace, _, _), label) in zip(self.actions, sublabel):
+                with tf.variable_scope("subloss_{}".format(len(subloss))):
+                    subloss.append(
+                        tf.losses.softmax_cross_entropy(
+                            onehot_labels=label, logits=logit_subspace))
 
             # Integrate the loss
             loss = tf.add_n(subloss, name="loss")/float(len(subloss))
@@ -238,7 +254,7 @@ class Agent:
         
 
         # Feed the state and get the action onehot
-        _, _, probability_subspace = zip(*self.actions[0])
+        _, _, probability_subspace = zip(*self.actions)
         subspace_action_prob = self.sess.run(probability_subspace, {
             self.state_ph: state,
             self.training_ph: False
