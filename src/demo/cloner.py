@@ -25,7 +25,8 @@ from config import(
     BINDINGS, 
     BATCH_SIZE,
     EPISODE_LENGTH,
-    RECORD_INTERVAL)
+    RECORD_INTERVAL,
+    MAX_SEQ_LEN)
 
 # Import hyperparameters.
 from agent import Agent
@@ -62,9 +63,15 @@ def run_training(coord, agent, bc_data_dir, action_map, train_writer):
             shard_actions = [
                 [actionbd.inv[v] for actionbd, v in zip(action_map, saction)] for saction in split_actions
             ]
+
+            # Reshape to max seq_len
+            for i in range(0, len(shard_actions), MAX_SEQ_LEN):
+                states.append(shard_states[i:i+MAX_SEQ_LEN])
+                actions.append(shard_actions[i:i+MAX_SEQ_LEN])
+
             # Add the shard to the dataset
-            states.append(shard_states)
-            actions.append(shard_actions)
+            # states.append(shard_states)
+            # actions.append(shard_actions)
 
     pad = len(max(states, key = len))
     state_space_size = np.shape(states[0])
