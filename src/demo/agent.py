@@ -100,7 +100,7 @@ class Agent:
                 print(head.get_shape())
                 conv_fn = lambda x : \
                     tf.layers.conv2d(
-                        inputs=head,
+                        inputs=x,
                         filters=min(2**conv_iter*16, 64),
                         kernel_size=[5, 5],
                         padding="same",
