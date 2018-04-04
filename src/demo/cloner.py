@@ -77,7 +77,7 @@ def run_training(coord, agent, bc_data_dir, action_map):
     action_arr = np.zeros(
         (len(states),
         pad,
-        action_space_size[1]))
+        action_space_size[1]),dtype=np.float32)
 
     for (i, (state, action))  in enumerate(zip(states, actions)):
         state_arr[i,:len(state),:,:] = state
