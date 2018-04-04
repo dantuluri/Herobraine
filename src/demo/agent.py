@@ -157,8 +157,8 @@ class Agent:
             #print(head.get_shape())
 
         # Apply dropout
-        dropout = lambda x : tf.layers.dropout(inputs=x, rate=DROPOUT, training=training_ph)
-        head = tf.map_fn(dropout, head)
+        head = tf.layers.dropout(inputs=head, rate=DROPOUT, training=training_ph)
+        
 
         with tf.variable_scope("fc_final"):
             # Calculate the dimensionality of action space
@@ -286,5 +286,7 @@ class Agent:
             subspace_action_argmax = [
                 subspace[0] for subspace in subspace_action_argmax]
 
+
+        
         return subspace_action_argmax
 
