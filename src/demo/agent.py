@@ -210,12 +210,13 @@ class Agent:
                     print("logit", logit_subspace)
                     print("label", label)
                     subloss.append(
-                        tf.losses.softmax_cross_entropy(
-                            onehot_labels=label, logits=logit_subspace), axis=-1)
+                        tf.nn.softmax_cross_entropy_with_logits(
+                            labels=label, logits=logit_subspace, dim=-1))
 
             # Integrate the loss
-            loss = tf.add_n(subloss, name="loss")/float(len(subloss))
-            loss = tf.reduce_sum(loss, axis=-1)
+            loss = tf.add_n(subloss)/float(len(subloss))
+            loss = tf.reduce_sum(subloss, name="loss")
+            print(loss)
 
             # Adjust for sequence length.
 
