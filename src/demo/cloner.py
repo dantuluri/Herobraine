@@ -185,8 +185,12 @@ def run_demonstrations(coord, agent, action_map):
             if cur_time - last_action_time > RECORD_INTERVAL:
                 # Get the agents action
                 action_index = agent.act(np.asarray(last_obs))
+
+                action_index = [x[0] for x in action_index]
+                
+                print(action_index)
                 #foo = zip(action_map, action_index)
-                action = "\n".join([samap[i] for samap, i in zip(action_map, *action_index)])
+                action = "\n".join([samap[i] for samap, i in zip(action_map, action_index)])
 
                 # Step the environment.
                 obs, reward, done, info = env.step(action)
@@ -233,7 +237,7 @@ def run_main(opts):
     training_thread.start()
 
     # Begin performing demonstrations.
-    time.sleep(20)
+    # time.sleep(5)
     run_demonstrations(coord, agent, action_map)
     coord.join([training_thread])
 
