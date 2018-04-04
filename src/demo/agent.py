@@ -3,6 +3,7 @@ agent.py -- The main module for describing the behacioral cloning agent.
 """
 import tensorflow as tf
 import numpy as np
+import datetime
 # Import hyperparameters.
 from config import (
     SMALLEST_FEATURE_MAP,
@@ -25,6 +26,9 @@ class Agent:
         self.action_space = action_space
         self.state_space = state_space
 
+        start_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.train_writer = tf.summary.FileWriter( './logs/train_' + start_str, sess.graph)
+
         with tf.variable_scope("model"):
             self.state_ph, \
             self.training_ph, \
@@ -35,6 +39,9 @@ class Agent:
             self.label_ph, \
             self.loss, \
             self.train_op = self.create_training()
+
+        self.merge = tf.summary.merge_all()
+        
 
     def get_state_variables(self, batch_size, cell):
         # For each layer, get the initial state and make a variable out of it
@@ -107,6 +114,7 @@ class Agent:
                         activation=tf.nn.relu)
                 head = tf.map_fn(conv_fn, head)
                 filter_size = min(head.get_shape().as_list()[2:-1])
+                tf.summary.histogram("activations_{}".format(conv_iter), head)
 
                 if filter_size > SMALLEST_FEATURE_MAP:
                     # Apply pooling
@@ -124,6 +132,7 @@ class Agent:
             num_neurons = np.prod(head.get_shape().as_list()[2  :])
             flatten_fn = lambda x : tf.reshape(x, [-1, num_neurons])
             head = tf.map_fn(flatten_fn, head)
+            tf.summary.histogram("activations_flatten", head)
 
 
         # Apply some fc layers 
@@ -194,11 +203,11 @@ class Agent:
             sublabel = []
             for i, space in enumerate(self.action_space):
                 with tf.variable_scope("one_hot_{}".format(i)):
-                    print("sublabel {}".format(i))
-                    print(label_ph.get_shape())
+                    #print("sublabel {}".format(i))
+                    #print(label_ph.get_shape())
                     fuck = tf.one_hot(indices=tf.cast(label_ph[:,:,i], tf.int32), depth=space)
-                    print(fuck.get_shape())
-                    print(tf.unstack(fuck,axis=-1))
+                    #print(fuck.get_shape())
+                    #print(tf.unstack(fuck,axis=-1))
                     sublabel.append(fuck) #tf.unstack(fuck,axis=-1)
 
         # First create the loss for each subspace.
@@ -207,8 +216,8 @@ class Agent:
             subloss = []
             for ((logit_subspace, _, _), label) in zip(self.actions, sublabel):
                 with tf.variable_scope("subloss_{}".format(len(subloss))):
-                    print("logit", logit_subspace)
-                    print("label", label)
+                    #print("logit", logit_subspace)
+                    #print("label", label)
                     subloss.append(
                         tf.nn.softmax_cross_entropy_with_logits(
                             labels=label, logits=logit_subspace, dim=-1))
