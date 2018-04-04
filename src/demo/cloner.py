@@ -7,6 +7,7 @@ Cloner.py -- The main program for cloning expert data from minecraft.
 """
 import tensorflow as tf
 import numpy as np
+import datetime
 import os
 import argparse
 import threading
@@ -40,7 +41,7 @@ def get_options():
     return  parser.parse_args()
 
 
-def run_training(coord, agent, bc_data_dir, action_map):
+def run_training(coord, agent, bc_data_dir, action_map, train_writer):
     """
     Runs training for the agent.
     """
@@ -83,27 +84,6 @@ def run_training(coord, agent, bc_data_dir, action_map):
         state_arr[i,:len(state),:,:] = state
         action_arr[i,:len(action)] = action
 
-    # empty_state  = np.zeros_like(states[0][0])
-    # empty_action = np.zeros_like(actions[0][0])
-    # states  = np.array( 
-    #     np.pad(
-    #         i, 
-    #         [(0, pad - len(i)), (0,0), (0,0),(0,0)],
-    #         mode='constant') \
-    #     for i in states)
-    # actions = np.array( 
-    #     np.pad(
-    #         i, 
-    #         [(0, pad - len(i)), (0,0)],
-    #         mode='constant') \
-    #     for i in actions)
-
-
-    # states  = np.array(i + [empty_state] * (pad - len(i)) for i in states)
-    # actions = np.array(i + [empty_action] * (pad - len(i)) for i in actions)
-
-    #states = np.asarray(states, dtype=np.uint8)
-    #actions = np.asarray(actions, dtype=np.float32)
     print("Processed with {} sequences".format(len(state_arr)))
 
     # Train the agent from the file store
@@ -113,7 +93,7 @@ def run_training(coord, agent, bc_data_dir, action_map):
         state_batch, action_batch = state_arr[batch_index], action_arr[batch_index]
 
         # Run the training procedure
-        loss = agent.train(state_batch, action_batch)
+        loss = agent.train(state_batch, action_batch, train_writer, tick)
         if tick % 10 == 0:
             print("Loss @ {}: {}".format(tick, loss))
 
@@ -224,12 +204,16 @@ def run_main(opts):
     # Create a model
     sess = tf.InteractiveSession()
     agent = Agent(state_space, action_space, sess)
+
+    start_str = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    train_writer = tf.summary.FileWriter( './logs/train_' + start_str, sess.graph)
+
     sess.run(tf.global_variables_initializer())
 
     # Start the training thread with a coordinator.
     coord = tf.train.Coordinator()
     training_thread = threading.Thread(
-        target=run_training, args=(coord, agent, opts.bc_data, action_map))
+        target=run_training, args=(coord, agent, opts.bc_data, action_map, train_writer))
     training_thread.start()
 
     # Begin performing demonstrations.

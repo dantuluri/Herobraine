@@ -96,3 +96,6 @@ src/Malmo
 
 # VS code fluf
 /.vscode
+
+#Tensorboard
+events.out.*

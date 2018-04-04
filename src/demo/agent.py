@@ -26,9 +26,6 @@ class Agent:
         self.action_space = action_space
         self.state_space = state_space
 
-        start_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.train_writer = tf.summary.FileWriter( './logs/train_' + start_str, sess.graph)
-
         with tf.variable_scope("model"):
             self.state_ph, \
             self.training_ph, \
@@ -203,21 +200,13 @@ class Agent:
             sublabel = []
             for i, space in enumerate(self.action_space):
                 with tf.variable_scope("one_hot_{}".format(i)):
-                    #print("sublabel {}".format(i))
-                    #print(label_ph.get_shape())
-                    fuck = tf.one_hot(indices=tf.cast(label_ph[:,:,i], tf.int32), depth=space)
-                    #print(fuck.get_shape())
-                    #print(tf.unstack(fuck,axis=-1))
-                    sublabel.append(fuck) #tf.unstack(fuck,axis=-1)
+                    sublabel.append(tf.one_hot(indices=tf.cast(label_ph[:,:,i], tf.int32), depth=space)) 
 
         # First create the loss for each subspace.
-        print("IN IT beru")
         with tf.variable_scope("loss"):
             subloss = []
             for ((logit_subspace, _, _), label) in zip(self.actions, sublabel):
                 with tf.variable_scope("subloss_{}".format(len(subloss))):
-                    #print("logit", logit_subspace)
-                    #print("label", label)
                     subloss.append(
                         tf.nn.softmax_cross_entropy_with_logits(
                             labels=label, logits=logit_subspace, dim=-1))
@@ -225,6 +214,7 @@ class Agent:
             # Integrate the loss
             loss = tf.add_n(subloss)/float(len(subloss))
             loss = tf.reduce_sum(subloss, name="loss")
+            tf.summary.scalar("Loss", loss)
             print(loss)
 
             # Adjust for sequence length.
@@ -235,16 +225,19 @@ class Agent:
 
         return label_ph, loss, train_op
 
-    def train(self, batch_states, batch_labels):
+    def train(self, batch_states, batch_labels, train_writer, tick):
         """
         Trains the model
         """
         # TODO support dynamic hidden state for inference
-        cur_loss, _ = self.sess.run([self.loss, self.train_op], {
+        cur_loss, _, summary = self.sess.run([self.loss, self.train_op, self.merge], {
             self.training_ph: True,
             self.state_ph:  batch_states,
             self.label_ph:  batch_labels
             })
+
+
+        train_writer.add_summary(summary, tick)
         return cur_loss
 
         # batch_states = [(h_i, S_i), (h_j, S_j), ...]
