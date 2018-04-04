@@ -100,7 +100,7 @@ class Agent:
                 print(head.get_shape())
                 conv_fn = lambda x : \
                     tf.layers.conv2d(
-                        inputs=x,
+                        inputs=head,
                         filters=min(2**conv_iter*16, 64),
                         kernel_size=[5, 5],
                         padding="same",
@@ -156,23 +156,26 @@ class Agent:
         with tf.variable_scope("fc_final"):
             # Calculate the dimensionality of action space
             num_outputs = sum(self.action_space)
-            dense = lambda x : tf.layers.dense(inputs=x, units=num_outputs)
-            head = tf.map_fn(dense, head)
+            dense = tf.layers.dense(inputs=head, units=num_outputs)
             #print(head.get_shape())
 
 
         # Apply selective softmax accordin to various XOR conditions on the output
         with tf.variable_scope("action"):
             #actions = tf.map_fn(self.selective_softmax, head, dtype = tf.float32)
-            action = []
+            action = [] 
             subspace_iter = 0
 
-            for space in self.action_space:
-                logits = head[:, subspace_iter:subspace_iter+space]
-                # Note: we could also collect probabilities:
-                probabilities = tf.nn.softmax(logits)
-                argmax = tf.argmax(input=logits, axis=2)
-                
+            for space in self.action_space: #, is_discrete
+                logits = head[:,:, subspace_iter:subspace_iter+space]
+                print(tf.shape(logits))
+
+                # if is_discrete:
+                    # Note: we could also collect probabilities:
+                probabilities = tf.nn.softmax(logits, axis=-1)
+                argmax = tf.argmax(input=logits, axis=-1)
+                # else:
+                    # probabilities, argmax = None, None
                 action.append((logits, argmax, probabilities))
                 subspace_iter += space
 
@@ -191,21 +194,30 @@ class Agent:
             sublabel = []
             for i, space in enumerate(self.action_space):
                 with tf.variable_scope("one_hot_{}".format(i)):
-                    one_hot_fn = lambda x : \
-                        tf.one_hot(indices=tf.cast(x[:,i], tf.int32), depth=space)
-                    sublabel.append(tf.unstack(tf.map_fn(one_hot_fn, label_ph),axis=2))
+                    print("sublabel {}".format(i))
+                    print(label_ph.get_shape())
+                    fuck = tf.one_hot(indices=tf.cast(label_ph[:,:,i], tf.int32), depth=space)
+                    print(fuck.get_shape())
+                    print(tf.unstack(fuck,axis=-1))
+                    sublabel.append(fuck) #tf.unstack(fuck,axis=-1)
 
         # First create the loss for each subspace.
+        print("IN IT beru")
         with tf.variable_scope("loss"):
             subloss = []
             for ((logit_subspace, _, _), label) in zip(self.actions, sublabel):
                 with tf.variable_scope("subloss_{}".format(len(subloss))):
+                    print("logit", logit_subspace)
+                    print("label", label)
                     subloss.append(
                         tf.losses.softmax_cross_entropy(
-                            onehot_labels=label, logits=logit_subspace))
+                            onehot_labels=label, logits=logit_subspace), axis=-1)
 
             # Integrate the loss
             loss = tf.add_n(subloss, name="loss")/float(len(subloss))
+            loss = tf.reduce_sum(loss, axis=-1)
+
+            # Adjust for sequence length.
 
         with tf.variable_scope("optimization"):
             optimizer = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE)
@@ -243,6 +255,7 @@ class Agent:
         """
 
         # TODO modify to properly handle sequence interactions
+        # TODO remove one-hot encoding
 
         # If observations missed.
         assert len(state.shape) >= 3
@@ -250,7 +263,7 @@ class Agent:
         # Handle shape size update if single state
         single_state = len(state.shape) == 3
         if single_state:
-            state = np.expand_dims(np.expand_dims(state, axis=0),axis=0)
+            state = np.expand_dims(np.expand_dims(state, axis=0), axis=0)
         
 
         # Feed the state and get the action onehot

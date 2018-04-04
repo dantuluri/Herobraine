@@ -72,12 +72,12 @@ def run_training(coord, agent, bc_data_dir, action_map):
         pad, 
         state_space_size[1], 
         state_space_size[2], 
-        state_space_size[3]),dtype=np.uint8)
+        state_space_size[3]), dtype=np.uint8)
     action_space_size = np.shape(actions[0])
     action_arr = np.zeros(
         (len(states),
         pad,
-        action_space_size[1]),dtype=np.float32)
+        action_space_size[1]), dtype=np.float32)
 
     for (i, (state, action))  in enumerate(zip(states, actions)):
         state_arr[i,:len(state),:,:] = state
@@ -206,6 +206,8 @@ def run_demonstrations(coord, agent, action_map):
 
 def run_main(opts):
     # Define the action space. (length of key bindings plus null action)
+    # TODO: Add is discrete for each one
+    # +1 for the no action
     action_space = [len(d) + 1 for d,_ in BINDINGS]
     print(action_space)
     action_map = []

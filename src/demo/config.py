@@ -29,7 +29,7 @@ BINDINGS_NEW = [{ 'w':'move 1', 'a':'strafe -1', 's':'move -1', 'd':'strafe 1', 
     
 SHARD_SIZE = 5000
 RECORD_INTERVAL = 1.0/10.0
-EPISODE_LENGTH = 1200
+EPISODE_LENGTH = 120000
 DATA_DIR = "./"
 
 # HYPERPARAMETERS
