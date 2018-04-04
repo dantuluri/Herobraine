@@ -136,8 +136,9 @@ class Agent:
         print(head.get_shape())
         for i, fc_size in enumerate(FC_SIZES):
             with tf.variable_scope("fc_{}".format(i)):
-                fc_fn = lambda x :  tf.layers.dense(inputs=x, units=fc_size, activation=tf.nn.relu)
-                head = tf.map_fn(fc_fn, head)
+                #fc_fn = lambda x :  tf.layers.dense(inputs=x, units=fc_size, activation=tf.nn.relu)
+                #head = tf.map_fn(fc_fn, head)
+                head = tf.layers.dense(inputs=head, units=fc_size, activation=tf.nn.relu)
         
         # Introduce lstm layer
         with tf.variable_scope('lstm'):
@@ -258,7 +259,6 @@ class Agent:
         """
 
         # TODO modify to properly handle sequence interactions
-        # TODO remove one-hot encoding
 
         # If observations missed.
         assert len(state.shape) >= 3
