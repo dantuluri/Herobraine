@@ -214,7 +214,7 @@ class Agent:
 
             # Integrate the loss
             loss = tf.add_n(subloss)/float(len(subloss))
-            loss = tf.reduce_sum(subloss, name="loss")
+            loss = tf.reduce_mean(subloss, name="loss")
             tf.summary.scalar("Loss", loss)
             print(loss)
 
