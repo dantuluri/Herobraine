@@ -29,13 +29,31 @@ class Agent:
         with tf.variable_scope("model"):
             self.state_ph, \
             self.training_ph, \
-            self.hidden_ph, \
+            self.initial_state, \
+            self.hidden_state, \
             self.actions = self.create_model()
+
+        with tf.variable_scope("target_model"):
+            self.target_state_ph, \
+            self.target_training_ph, \
+            self.target_initial_state, \
+            self.target_hidden_state, \
+            self.target_actions = self.create_model(summaries=False)
 
         with tf.variable_scope("training"):
             self.label_ph, \
             self.loss, \
             self.train_op = self.create_training()
+
+
+        with tf.variable_scope("copy_operation"):
+            vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='model')
+            target_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='target_model')
+
+            # Assuming that the vars are sorted correctly
+            self.target_update = [
+                tv.assign(v.value()) for tv, v in zip(target_vars, vars)
+                ]
 
         self.merge = tf.summary.merge_all()
         
@@ -64,22 +82,22 @@ class Agent:
     # [sequence_len * batch_size] + self.state_space to do the convolutional layers and some
     # fully connected layers. Then map this back to [batch_size, sequence_len, num_neruons] 
     # and apply lstm layer using mapfn to introduce the remaining time independent layers 
-    def create_model(self):
-        """
+    def create_model(self, summaries=True):
+        """self.
         Creates the model.
         Returns: state_placeholder, action output tensor.
         """        
         
         # Input Placeholder (batch, time, [state])
-        state_ph = tf.placeholder(tf.float32, shape=[None] + [None] + self.state_space)
+        state_ph = tf.placeholder(tf.float32, shape=[None] + [None] + self.state_space, name="state")
 
         # Training Flag
         training_ph = tf.placeholder(tf.bool)
 
         # Hidden state Placeholder 
         batch_size    = tf.shape(state_ph)[0]
-        initial_state_ph = tf.placeholder(tf.float32, shape=[2, None, LSTM_HIDDEN])
-        initial_state = tf.contrib.rnn.LSTMStateTuple(initial_state_ph[0], initial_state_ph[1])
+        # initial_state_ph = tf.placeholder(tf.float32, shape=[2, None, LSTM_HIDDEN], name="initial_state_ph")
+        # initial_state = tf.contrib.rnn.LSTMStateTuple(initial_state_ph[0], initial_state_ph[1])
 
 
         filter_size = max(self.state_space[:-1])
@@ -115,7 +133,7 @@ class Agent:
                         activation=tf.nn.relu)
                 head = conv_fn(head)
                 filter_size = min(head.get_shape().as_list()[2:-1])
-                tf.summary.histogram("activations_{}".format(conv_iter), head)
+                if summaries: tf.summary.histogram("activations_{}".format(conv_iter), head)
 
                 if filter_size > SMALLEST_FEATURE_MAP:
                     # Apply pooling
@@ -132,7 +150,7 @@ class Agent:
             num_neurons = np.prod(head.get_shape().as_list()[2  :])
             flatten_fn = lambda x : tf.reshape(x, [shape[0], shape[1], num_neurons])
             head = flatten_fn(head)
-            tf.summary.histogram("activations_flatten", head)
+            if summaries: tf.summary.histogram("activations_flatten", head)
 
 
         # Apply some fc layers 
@@ -191,14 +209,14 @@ class Agent:
                 action.append((logits, argmax, probabilities))
                 subspace_iter += space
 
-        return state_ph, training_ph, hidden_state, action #TODO ,update_hidden_op
+        return state_ph, training_ph, initial_state,  hidden_state, action #TODO ,update_hidden_op
 
     def create_training(self):
         """
         Creates the training procedure.
         Returns: loss tensor, training_operation
         """    
-        # Create the label placeholder
+
         label_ph = tf.placeholder(tf.int32, shape=[None, None, len(self.action_space)])
         sublabel = []
         with tf.variable_scope("label_processing"):
@@ -236,6 +254,8 @@ class Agent:
         Trains the model
         """
         # TODO support dynamic hidden state for inference
+
+
         cur_loss, _, summary = self.sess.run([self.loss, self.train_op, self.merge], {
             self.training_ph: True,
             self.state_ph:  batch_states,
@@ -257,7 +277,7 @@ class Agent:
         #     })
         # return cur_loss
 
-    def act(self, state):
+    def act(self, state, hidden, update=False):
         """
         Acts on single or multiple states.
         Returns actions in a onehot 
@@ -273,13 +293,21 @@ class Agent:
         if single_state:
             state = np.expand_dims(np.expand_dims(state, axis=0), axis=0)
         
+        # If update
+        fd = {
+            self.target_state_ph: state,
+            self.target_training_ph: False,
+        }
+
+        if update:
+            self.sess.run(self.target_update)
+        else:
+            fd.update({self.target_initial_state: hidden})
+   
 
         # Feed the state and get the action onehot
-        _, _, probability_subspace = zip(*self.actions)
-        subspace_action_prob = self.sess.run(probability_subspace, {
-            self.state_ph: state,
-            self.training_ph: False
-            })
+        _, _, probability_subspace = zip(*self.target_actions)
+        subspace_action_prob, out_hidden = self.sess.run([probability_subspace, self.target_hidden_state], fd)
 
         subspace_action_argmax = [[
             [np.argmax(np.random.multinomial(1, pvals=v - max(sum(v) -1,0))) for v in sap] 
@@ -293,5 +321,5 @@ class Agent:
 
 
         
-        return subspace_action_argmax
+        return subspace_action_argmax, out_hidden
 

@@ -2,7 +2,7 @@
 config.py -- The main configuration store for the behavioral cloning demo.
 """
 GYM_RESOLUTION = (96*2, 128*2)
-MALMO_IP = ('127.0.0.1', 10001)
+MALMO_IP = ('127.0.0.1', 10000)
 
 # DONOT CHANGE THE ORDER HERE.
 # IT WILL INVALIDATE OLD DATA!
@@ -29,7 +29,7 @@ BINDINGS_NEW = [{ 'w':'move 1', 'a':'strafe -1', 's':'move -1', 'd':'strafe 1', 
     
 SHARD_SIZE = 5000
 RECORD_INTERVAL = 1.0/10.0
-EPISODE_LENGTH = 120000
+EPISODE_LENGTH = 2500
 DATA_DIR = "./"
 
 # HYPERPARAMETERS
@@ -39,5 +39,5 @@ LEARNING_RATE = 1e-4
 DROPOUT=0
 BATCH_SIZE = 32
 PIXEL_RESOLUTION = 255.0
-LSTM_HIDDEN = 128
-MAX_SEQ_LEN = 20
+LSTM_HIDDEN = 512
+MAX_SEQ_LEN = 50

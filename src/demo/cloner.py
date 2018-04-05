@@ -146,57 +146,64 @@ def run_demonstrations(coord, agent, action_map):
 
     while not coord.should_stop():
         failed = True
-        while failed:
-            try:
-                env = gym.make('MinecraftDefaultWorld1-v0')
-                env.init(
-                    start_minecraft=None,
-                    client_pool=[MALMO_IP],
-                    continuous_discrete = True,
-                    videoResolution=(GYM_RESOLUTION[1], GYM_RESOLUTION[0]),
-                    add_noop_command=True)
-                failed = False
-            except Exception as e:
-                pass
-        # Create the environment with specified arguments
-        last_obs = env.reset()
-        last_action = ''
-        last_action_time = time.time()
+        try:
+            while failed:
+                try:
+                    env = gym.make('MinecraftDefaultWorld1-v0')
+                    env.init(
+                        start_minecraft=None,
+                        client_pool=[MALMO_IP],
+                        continuous_discrete = True,
+                        videoResolution=(GYM_RESOLUTION[1], GYM_RESOLUTION[0]),
+                        add_noop_command=True)
+                    failed = False
 
+                    last_obs = env.reset()
+                    last_action = ''
+                except Exception as e:
+                    pass
+            # Create the environment with specified arguments
+               
+            last_action_time = time.time()
+            last_hidden = None
 
-        for tick in range(EPISODE_LENGTH):
-            env.render(mode='human')
-            cur_time = time.time()
-            
-            # # Restart
-            # if restart:
-            #     restart = False
-            #     break
+            for tick in range(EPISODE_LENGTH):
+                env.render(mode='human')
+                cur_time = time.time()
+                # # Restart
+                # if restart:
+                #     restart = False
+                #     break
 
-            # If the record interval has passed
-            if cur_time - last_action_time > RECORD_INTERVAL:
-                # Get the agents action
-                action_index = agent.act(np.asarray(last_obs))
+                # If the record interval has passed
+                if cur_time - last_action_time > RECORD_INTERVAL:
+                    # Get the agents action
+                    action_index, hidden = agent.act(np.asarray(last_obs), last_hidden, last_hidden is None)
 
-                action_index = [x[0] for x in action_index]
-                
-                print(action_index)
-                #foo = zip(action_map, action_index)
-                action = "\n".join([samap[i] for samap, i in zip(action_map, action_index)])
+                    action_index = [x[0] for x in action_index]
+                    
+                    #foo = zip(action_map, action_index)
+                    action = "\n".join([samap[i] for samap, i in zip(action_map, action_index)])
 
-                # Step the environment.
-                obs, reward, done, info = env.step(action)
-                print(action.split("\n"))
+                    # Step the environment.
+                    obs, reward, done, info = env.step(action)
+                    print(action.split("\n"))
 
-                # Potnetially back up obs sobs pair.
-                # If not done.
+                    # Potnetially back up obs sobs pair.
+                    # If not done.
 
-                last_action_time = cur_time
-                last_action = action
-                last_obs = obs
-            else:
-                last_obs,  reward, done, info  = env.step(last_action)
-
+                    last_action_time = cur_time
+                    last_action = action
+                    last_obs = obs
+                    last_hidden = hidden
+                else:
+                    last_obs,  reward, done, info  = env.step(last_action)
+        except KeyboardInterrupt as k:
+            coord.request_stop()
+            return
+        except Exception as e: 
+            print("Trying again")
+            raise e
 
 
 
