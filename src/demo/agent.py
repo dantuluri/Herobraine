@@ -86,6 +86,9 @@ class Agent:
 
         head = state_ph
         print(head.get_shape())
+        print("Downsampling.")
+        head = tf.layers.max_pooling3d(inputs=head, pool_size=[1,4, 4], strides=[1,4,4])
+        print("Done", head.get_shape())
 
         # # Reshape the data to flatten sequences    
         #shape = tf.shape(head) 
@@ -101,24 +104,23 @@ class Agent:
         while filter_size > SMALLEST_FEATURE_MAP:
             # Build a convolution
             with tf.variable_scope("conv_block_{}".format(conv_iter)):
+                print("Layer i")
                 print(head.get_shape())
                 conv_fn = lambda x : \
-                    tf.layers.conv2d(
+                    tf.layers.conv3d(
                         inputs=x,
-                        filters=min(2**conv_iter*16, 64),
-                        kernel_size=[5, 5],
+                        filters=min(2**conv_iter*32, 64),
+                        kernel_size=[1, 5, 5],
                         padding="same",
                         activation=tf.nn.relu)
-                head = tf.map_fn(conv_fn, head)
+                head = conv_fn(head)
                 filter_size = min(head.get_shape().as_list()[2:-1])
                 tf.summary.histogram("activations_{}".format(conv_iter), head)
 
                 if filter_size > SMALLEST_FEATURE_MAP:
                     # Apply pooling
-                    pooling_fn = lambda x : tf.layers.max_pooling2d(inputs=x, pool_size=[2, 2], strides=2)
-                    head = tf.map_fn(pooling_fn, head)
-                    print(head.get_shape())
-                    print(conv_iter)
+                    pooling_fn = lambda x : tf.layers.max_pooling3d(inputs=x, pool_size=[1,2, 2], strides=[1,2,2])
+                    head = pooling_fn(head)
 
             conv_iter += 1
             filter_size = min(head.get_shape().as_list()[2:-1])
@@ -126,15 +128,16 @@ class Agent:
         # Flatten to fully connected 
         print(head.get_shape())
         with tf.variable_scope("flatten_fc"):
+            shape = tf.shape(head)
             num_neurons = np.prod(head.get_shape().as_list()[2  :])
-            flatten_fn = lambda x : tf.reshape(x, [-1, num_neurons])
-            head = tf.map_fn(flatten_fn, head)
+            flatten_fn = lambda x : tf.reshape(x, [shape[0], shape[1], num_neurons])
+            head = flatten_fn(head)
             tf.summary.histogram("activations_flatten", head)
 
 
         # Apply some fc layers 
         print(head.get_shape())
-        for i, fc_size in enumerate(FC_SIZES):
+        for i, fc_size in enumerate(FC_SIZES[:2]):
             with tf.variable_scope("fc_{}".format(i)):
                 #fc_fn = lambda x :  tf.layers.dense(inputs=x, units=fc_size, activation=tf.nn.relu)
                 #head = tf.map_fn(fc_fn, head)
@@ -154,8 +157,10 @@ class Agent:
                 time_major=False, 
                 swap_memory=True)
 
-            #print(head.get_shape())
+        print(head.get_shape())
 
+
+        print(head.get_shape())
         # Apply dropout
         head = tf.layers.dropout(inputs=head, rate=DROPOUT, training=training_ph)
         
@@ -163,7 +168,7 @@ class Agent:
         with tf.variable_scope("fc_final"):
             # Calculate the dimensionality of action space
             num_outputs = sum(self.action_space)
-            dense = tf.layers.dense(inputs=head, units=num_outputs)
+            head = tf.layers.dense(inputs=head, units=num_outputs)
             #print(head.get_shape())
 
 

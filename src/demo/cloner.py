@@ -96,13 +96,18 @@ def run_training(coord, agent, bc_data_dir, action_map, train_writer):
     # Train the agent from the file store
     for tick in range(100000):
         # Get a random batch using an increasing batch size schedule
-        batch_index = np.random.choice(len(state_arr), BATCH_SIZE*2**(min(tick//1000, 2)))
+        batch_index = np.random.choice(len(state_arr), BATCH_SIZE)
+        t0 = time.time()
         state_batch, action_batch = state_arr[batch_index], action_arr[batch_index]
-
+        
+        print( '\033[92m' + "\tDrew batch in {}".format( time.time() - t0)+ '\033[0m')
+        t0 = time.time()
         # Run the training procedure
         loss = agent.train(state_batch, action_batch, train_writer, tick)
-        if tick % 10 == 0:
-            print("Loss @ {}: {}".format(tick, loss))
+
+        print( '\033[92m' + "\tTrained agent in {}".format(time.time() - t0) + '\033[0m')
+        if tick % 1 == 0:
+            print( '\033[92m' + "\t\tLoss @ {}: {}".format(tick, loss)+ '\033[0m')
 
         # Persist the agent occasionally in the same directory.
         # Stop in case there is 
