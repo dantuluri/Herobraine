@@ -11,7 +11,8 @@ from config import (
     LEARNING_RATE,
     DROPOUT,
     PIXEL_RESOLUTION,
-    LSTM_HIDDEN)
+    LSTM_HIDDEN,
+    REGULARIZATION_SCALE)
 
 class Agent:
     """
@@ -99,7 +100,7 @@ class Agent:
         # initial_state_ph = tf.placeholder(tf.float32, shape=[2, None, LSTM_HIDDEN], name="initial_state_ph")
         # initial_state = tf.contrib.rnn.LSTMStateTuple(initial_state_ph[0], initial_state_ph[1])
 
-
+        
         filter_size = max(self.state_space[:-1])
 
         head = state_ph
@@ -108,15 +109,14 @@ class Agent:
         head = tf.layers.max_pooling3d(inputs=head, pool_size=[1,4, 4], strides=[1,4,4])
         print("Done", head.get_shape())
 
-        # # Reshape the data to flatten sequences    
-        #shape = tf.shape(head) 
-        #head = tf.reshape(head, [np.prod(shape[:2]), )
-
+        # Regularization
+        with tf.variable_scope('regularization'):
+            regularizer = tf.contrib.layers.l1_regularizer(scale=REGULARIZATION_SCALE)
         # Normalize the data
         with tf.variable_scope("normalization"):
             head /= PIXEL_RESOLUTION
             head -= 0.5 # TODO Take the mean of the data.
-
+        
         # Apply some convolutions.
         conv_iter = 0
         while filter_size > SMALLEST_FEATURE_MAP:
@@ -124,21 +124,19 @@ class Agent:
             with tf.variable_scope("conv_block_{}".format(conv_iter)):
                 print("Layer i")
                 print(head.get_shape())
-                conv_fn = lambda x : \
-                    tf.layers.conv3d(
-                        inputs=x,
+                head = tf.layers.conv3d(
+                        inputs=head,
                         filters=min(2**conv_iter*32, 64),
                         kernel_size=[1, 5, 5],
                         padding="same",
-                        activation=tf.nn.relu)
-                head = conv_fn(head)
+                        activation=tf.nn.relu,
+                        kernel_regularizer=regularizer)
                 filter_size = min(head.get_shape().as_list()[2:-1])
                 if summaries: tf.summary.histogram("activations_{}".format(conv_iter), head)
 
                 if filter_size > SMALLEST_FEATURE_MAP:
                     # Apply pooling
-                    pooling_fn = lambda x : tf.layers.max_pooling3d(inputs=x, pool_size=[1,2, 2], strides=[1,2,2])
-                    head = pooling_fn(head)
+                    head = tf.layers.max_pooling3d(inputs=head, pool_size=[1, 2, 2], strides=[1,2,2])
 
             conv_iter += 1
             filter_size = min(head.get_shape().as_list()[2:-1])
@@ -148,9 +146,8 @@ class Agent:
         with tf.variable_scope("flatten_fc"):
             shape = tf.shape(head)
             num_neurons = np.prod(head.get_shape().as_list()[2  :])
-            flatten_fn = lambda x : tf.reshape(x, [shape[0], shape[1], num_neurons])
-            head = flatten_fn(head)
-            if summaries: tf.summary.histogram("activations_flatten", head)
+            head = tf.reshape(head, [shape[0], shape[1], num_neurons])
+            tf.summary.histogram("activations_flatten", head)
 
 
         # Apply some fc layers 
@@ -159,7 +156,8 @@ class Agent:
             with tf.variable_scope("fc_{}".format(i)):
                 #fc_fn = lambda x :  tf.layers.dense(inputs=x, units=fc_size, activation=tf.nn.relu)
                 #head = tf.map_fn(fc_fn, head)
-                head = tf.layers.dense(inputs=head, units=fc_size, activation=tf.nn.relu)
+                head = tf.layers.dense(inputs=head, units=fc_size, activation=tf.nn.relu, kernel_regularizer=regularizer)
+                tf.summary.histogram("fc_{}".format(i), head)
         
         # Introduce lstm layer
         with tf.variable_scope('lstm'):
@@ -173,7 +171,8 @@ class Agent:
                 head, 
                 initial_state=initial_state, 
                 time_major=False, 
-                swap_memory=True)
+                swap_memory=False)
+            tf.summary.histogram("lstm", head)
 
         print(head.get_shape())
 
@@ -238,10 +237,17 @@ class Agent:
             # Integrate the loss
             loss = tf.add_n(subloss)/float(len(subloss))
             loss = tf.reduce_mean(subloss, name="loss")
-            tf.summary.scalar("Loss", loss)
+            tf.summary.scalar("basic_loss", loss)
             print(loss)
 
-            # Adjust for sequence length.
+            # TODO Adjust for sequence length.
+
+        # Regularization
+        with tf.variable_scope("regularized_loss"):
+            #reg_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+            reg_losses = tf.losses.get_regularization_losses()
+            loss = loss + tf.reduce_mean(reg_losses)
+            tf.summary.scalar("Loss", loss)
 
         with tf.variable_scope("optimization"):
             optimizer = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE)
