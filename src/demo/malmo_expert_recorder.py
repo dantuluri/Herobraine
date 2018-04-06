@@ -414,7 +414,7 @@ if not xml_filename == "":
 
     my_mission = MalmoPython.MissionSpec( open(xml_filename).read(), True)
     my_mission.requestVideo( 640, 480 )
-    my_mission.timeLimitInSeconds( 300 )
+    my_mission.timeLimitInSeconds( 1000 )
     
     my_mission_record = MalmoPython.MissionRecordSpec('./hac_saved_mission.tgz')
     my_mission_record.recordCommands()
@@ -438,10 +438,10 @@ else:
     my_mission.observeChat()
     my_mission.observeGrid( -1, -1, -1, 1, 1, 1, 'grid' )
     my_mission.observeHotBar()
-    my_mission.drawBlock( 5, 226, 5, 'gold_block' )
+    #my_mission.drawBlock( 5, 226, 5, 'gold_block' )
     my_mission.rewardForReachingPosition( 5.5, 227, 5.5, 100, 0.5 )
     my_mission.endAt( 5.5, 227, 5.5, 0.5 )
-    my_mission.startAt( 0.5, 227, 0.5 )
+    my_mission.startAt( 0.5, 80, 0.5 )
     #if rep%2 == 1: # alternate between continuous and discrete missions, for fun
         #my_mission.removeAllCommandHandlers()
         #my_mission.allowAllDiscreteMovementCommands()
