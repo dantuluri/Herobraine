@@ -61,7 +61,8 @@ class MinecraftEnv(gym.Env):
              allowAbsoluteMovement=None, recordDestination=None,
              recordObservations=None, recordRewards=None,
              recordCommands=None, recordMP4=None,
-             gameMode=None, forceWorldReset=None):
+             gameMode=None, forceWorldReset=None,
+             max_time=None):
 
         self.max_retries = max_retries
         self.retry_sleep = retry_sleep
@@ -70,6 +71,10 @@ class MinecraftEnv(gym.Env):
         self.forceWorldReset = forceWorldReset
         self.continuous_discrete = continuous_discrete
         self.add_noop_command = add_noop_command
+
+        if max_time:
+            self.mission_spec.timeLimitInSeconds(max_time)
+
 
         if videoResolution:
             if videoWithDepth:

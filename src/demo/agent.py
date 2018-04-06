@@ -33,19 +33,21 @@ class Agent:
             self.initial_state, \
             self.hidden_state, \
             self.actions = self.create_model()
+        
+        with tf.variable_scope("training"):
+            self.label_ph, \
+            self.loss, \
+            self.train_op = self.create_training()
 
+        # This msut go before the target model!
+        self.merge = tf.summary.merge_all()
+        
         with tf.variable_scope("target_model"):
             self.target_state_ph, \
             self.target_training_ph, \
             self.target_initial_state, \
             self.target_hidden_state, \
             self.target_actions = self.create_model(summaries=False)
-
-        with tf.variable_scope("training"):
-            self.label_ph, \
-            self.loss, \
-            self.train_op = self.create_training()
-
 
         with tf.variable_scope("copy_operation"):
             vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='model')
@@ -56,8 +58,8 @@ class Agent:
                 tv.assign(v.value()) for tv, v in zip(target_vars, vars)
                 ]
 
-        self.merge = tf.summary.merge_all()
-        
+
+
 
     def get_state_variables(self, batch_size, cell):
         # For each layer, get the initial state and make a variable out of it
@@ -237,17 +239,17 @@ class Agent:
             # Integrate the loss
             loss = tf.add_n(subloss)/float(len(subloss))
             loss = tf.reduce_mean(subloss, name="loss")
-            tf.summary.scalar("basic_loss", loss)
+            tf.summary.scalar("Loss", loss)
             print(loss)
 
             # TODO Adjust for sequence length.
 
         # Regularization
-        with tf.variable_scope("regularized_loss"):
-            #reg_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
-            reg_losses = tf.losses.get_regularization_losses()
-            loss = loss + tf.reduce_mean(reg_losses)
-            tf.summary.scalar("Loss", loss)
+        # with tf.variable_scope("regularized_loss"):
+        #     #reg_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+        #     reg_losses = tf.losses.get_regularization_losses()
+        #     loss = loss + tf.reduce_mean(reg_losses)
+        #     tf.summary.scalar("Loss", loss)
 
         with tf.variable_scope("optimization"):
             optimizer = tf.train.AdamOptimizer(learning_rate=LEARNING_RATE)

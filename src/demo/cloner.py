@@ -7,6 +7,7 @@ Cloner.py -- The main program for cloning expert data from minecraft.
 """
 import tensorflow as tf
 import numpy as np
+import tqdm
 import datetime
 import os
 import argparse
@@ -144,30 +145,36 @@ def run_demonstrations(coord, agent, action_map):
 
     # keyboard.hook(keyboard_hook)
 
+    failed = True
+    while failed:
+        try:
+            env = gym.make('MinecraftDefaultWorld1-v0')
+            env.init(
+                start_minecraft=None,
+                client_pool=[MALMO_IP],
+                continuous_discrete = True,
+                videoResolution=(GYM_RESOLUTION[1], GYM_RESOLUTION[0]),
+                add_noop_command=True,
+                max_time=EPISODE_LENGTH*RECORD_INTERVAL)
+            print("Connected")
+
+            failed = False
+        except Exception as e:
+            pass
+
     while not coord.should_stop():
         failed = True
         try:
-            while failed:
-                try:
-                    env = gym.make('MinecraftDefaultWorld1-v0')
-                    env.init(
-                        start_minecraft=None,
-                        client_pool=[MALMO_IP],
-                        continuous_discrete = True,
-                        videoResolution=(GYM_RESOLUTION[1], GYM_RESOLUTION[0]),
-                        add_noop_command=True)
-                    failed = False
-
-                    last_obs = env.reset()
-                    last_action = ''
-                except Exception as e:
-                    pass
             # Create the environment with specified arguments
-               
+            
+            last_obs = env.reset()
+            last_action = ''
             last_action_time = time.time()
             last_hidden = None
 
-            for tick in range(EPISODE_LENGTH):
+            pbar = tqdm.tqdm(range(EPISODE_LENGTH))
+            tick = 0
+            while tick < EPISODE_LENGTH:
                 env.render(mode='human')
                 cur_time = time.time()
                 # # Restart
@@ -177,6 +184,9 @@ def run_demonstrations(coord, agent, action_map):
 
                 # If the record interval has passed
                 if cur_time - last_action_time > RECORD_INTERVAL:
+
+                    pbar.update(1)
+                    tick += 1
                     # Get the agents action
                     action_index, hidden = agent.act(np.asarray(last_obs), last_hidden, last_hidden is None)
 
@@ -187,7 +197,7 @@ def run_demonstrations(coord, agent, action_map):
 
                     # Step the environment.
                     obs, reward, done, info = env.step(action)
-                    print(action.split("\n"))
+                    pbar.set_description(str(action.split("\n")))
 
                     # Potnetially back up obs sobs pair.
                     # If not done.
@@ -198,12 +208,15 @@ def run_demonstrations(coord, agent, action_map):
                     last_hidden = hidden
                 else:
                     last_obs,  reward, done, info  = env.step(last_action)
+
+                if done:
+                    break
         except KeyboardInterrupt as k:
             coord.request_stop()
             return
         except Exception as e: 
             print("Trying again")
-            raise e
+            print(e)
 
 
 
