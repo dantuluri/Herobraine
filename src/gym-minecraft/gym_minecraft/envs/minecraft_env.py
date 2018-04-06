@@ -381,6 +381,7 @@ class MinecraftEnv(gym.Env):
                 img = pygame.surfarray.make_surface(self.last_image.swapaxes(0, 1))
                 scaled_image = pygame.transform.scale(img, RENDER_SIZE)
                 self.screen.blit(scaled_image, (0, 0))
+                pygame.event.get()
                 pygame.display.update()
         else:
             raise error.UnsupportedMode("Unsupported render mode: " + mode)
